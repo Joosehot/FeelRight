@@ -1,0 +1,71 @@
+# Film cue in D minor. A lone piano states the theme, strings take it and
+# widen, the brass and piano octaves drive to the climax, and the piano
+# returns alone for the aftermath. One theme, four textures.
+
+name = "Elokuva"
+
+[[section]]
+name = "A piano yksin"
+chords = "Dm Bb F C | Dm Bb F A7"
+key = "D:minor"
+tempo = 72
+bars = 8
+seed = 5
+instrument = "piano"
+octave = 0
+style = "classical"
+form = "period"
+tension = [0.15, 0.2, 0.25, 0.3, 0.25, 0.3, 0.4, 0.5]
+ends_open = true
+refine = 40
+rules_override = { mostly_steps = { min_ratio = 0.55 }, breathing = { weight = 4.0 } }
+
+[[section]]
+name = "B jouset"
+chords = "Dm Bb F C | Dm Bb F C | Gm Dm Bb A7 | Dm Bb C A7"
+key = "D:minor"
+tempo = 80
+bars = 16
+seed = 11
+instrument = "strings"
+octave = 1
+style = "orchestral"
+form = "period"
+tension = [0.3, 0.35, 0.4, 0.45, 0.4, 0.45, 0.55, 0.5, 0.5, 0.55, 0.65, 0.75, 0.65, 0.6, 0.65, 0.7]
+ends_open = true
+theme_from = "A piano yksin"
+refine = 60
+rules_override = { mostly_steps = { min_ratio = 0.55 }, density = { weight = 3.0 } }
+
+[[section]]
+name = "C huippu"
+chords = "Dm Bb F C | Dm Bb F C | Gm Dm Bb A7 | Bb C Dm Dm"
+key = "D:minor"
+tempo = 92
+bars = 16
+seed = 11
+instrument = "horn"
+octave = 0
+style = "concerto"
+form = "period"
+tension = [0.6, 0.65, 0.7, 0.75, 0.7, 0.75, 0.85, 0.85, 0.75, 0.8, 0.95, 1.0, 0.9, 0.75, 0.6, 0.5]
+ends_open = true
+theme_from = "A piano yksin"
+refine = 60
+rules_override = { single_climax = { weight = 4.0, min_height = 10 }, max_leap = { soft_max = 12 }, density = { weight = 3.0 } }
+
+[[section]]
+name = "D jälkinäytös"
+chords = "Bb F Gm Dm | Bb F A7 Dm"
+key = "D:minor"
+tempo = 64
+bars = 8
+seed = 2
+instrument = "piano"
+octave = 0
+style = "classical"
+form = "period"
+tension = [0.3, 0.3, 0.35, 0.3, 0.25, 0.25, 0.2, 0.1]
+theme_from = "A piano yksin"
+refine = 40
+rules_override = { mostly_steps = { min_ratio = 0.55 }, breathing = { weight = 4.0 } }
