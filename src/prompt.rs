@@ -148,6 +148,14 @@ pub fn plan(text: &str) -> Plan {
         instruments = vec!["piano".into(), "piano".into(), "piano".into()];
         tempo = tempo.max(120);
     }
+    if has(&t, &["hassu", "hauska", "funny", "sirkus", "circus", "komiikka", "comic", "klovni", "clown"]) {
+        style = "circus".into();
+        instruments = vec!["bassoon".into(), "piccolo".into(), "xylophone".into()];
+        mode = Mode::Major;
+        tempo = tempo.max(132);
+        energy = energy.max(0.6);
+        notes.push("mood: comic".into());
+    }
     if has(&t, &["jazz", "swing", "bebop", "blues"]) {
         style = "jazz".into();
         instruments = vec!["sax".into(), "epiano".into(), "trumpet".into()];

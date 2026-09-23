@@ -1,0 +1,55 @@
+# A comic circus piece: bassoon waddles in C major, piccolo answers too
+# high, xylophone clatters through the finale. Oom-pah tuba, accordion
+# stabs, woodblocks, staccato everywhere. Big leaps and surprises are
+# rewarded on purpose.
+
+name = "Hassu"
+
+[[section]]
+name = "A fagotti"
+chords = "C G7 C C | F C G7 C | C G7 C A7 | Dm G7 C G7"
+key = "C:major"
+tempo = 132
+bars = 16
+seed = 4
+instrument = "bassoon"
+octave = -1
+style = "circus"
+form = "sentence"
+tension = [0.5, 0.6, 0.6, 0.7, 0.6, 0.7, 0.8, 0.7, 0.6, 0.7, 0.9, 1.0, 0.8, 0.7, 0.6, 0.7]
+ends_open = true
+refine = 40
+rules_override = { max_leap = { soft_max = 12, weight = 0.5 }, surprise = { min_bits = 3.0, max_bits = 4.6 }, mostly_steps = { min_ratio = 0.35, max_ratio = 0.6 }, gap_fill = { weight = 0.5 }, syncopation = { threshold = 0.4 } }
+
+[[section]]
+name = "B pikkolo"
+chords = "F C7 F F | Bb F C7 F | F C7 F D7 | Gm C7 F C7"
+key = "F:major"
+tempo = 140
+bars = 16
+seed = 8
+instrument = "piccolo"
+octave = 1
+style = "circus"
+form = "period"
+tension = [0.5, 0.6, 0.6, 0.7, 0.6, 0.7, 0.8, 0.7, 0.6, 0.7, 0.9, 1.0, 0.8, 0.7, 0.7, 0.8]
+ends_open = true
+theme_from = "A fagotti"
+refine = 40
+rules_override = { max_leap = { soft_max = 12, weight = 0.5 }, surprise = { min_bits = 3.0, max_bits = 4.6 }, mostly_steps = { min_ratio = 0.35, max_ratio = 0.6 }, gap_fill = { weight = 0.5 }, syncopation = { threshold = 0.4 } }
+
+[[section]]
+name = "C ksylofoni"
+chords = "C G7 C C | F C G7 C | C G7 C A7 | Dm G7 C C"
+key = "C:major"
+tempo = 152
+bars = 16
+seed = 4
+instrument = "xylophone"
+octave = 1
+style = "circus"
+form = "sentence"
+tension = [0.6, 0.7, 0.7, 0.8, 0.7, 0.8, 0.9, 0.9, 0.7, 0.8, 1.0, 1.0, 0.9, 0.8, 0.6, 0.3]
+theme_from = "A fagotti"
+refine = 40
+rules_override = { max_leap = { soft_max = 12, weight = 0.5 }, surprise = { min_bits = 3.0, max_bits = 4.6 }, mostly_steps = { min_ratio = 0.35, max_ratio = 0.6 }, gap_fill = { weight = 0.5 }, syncopation = { threshold = 0.4 } }

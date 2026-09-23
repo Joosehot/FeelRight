@@ -227,6 +227,9 @@ const GM_ACOUSTIC_BASS: u8 = 32;
 const CH_DRUMS: u8 = 9;
 const DRUM_RIDE: u8 = 51;
 const DRUM_HIHAT_PEDAL: u8 = 44;
+const DRUM_WOODBLOCK: u8 = 76;
+const DRUM_LOW_WOODBLOCK: u8 = 77;
+const GM_ACCORDION: u8 = 21;
 const GM_TUBA: u8 = 58;
 const GM_TIMPANI: u8 = 47;
 
@@ -292,7 +295,9 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
             let is_phrase_final = sec.phrase_ends.contains(&bar)
                 && notes.get(i + 1).map(|q| q.start / spb != bar).unwrap_or(true);
             let stepwise = i > 0 && (n.pitch as i32 - notes[i - 1].pitch as i32).abs() <= 2;
-            let dur = if is_phrase_final {
+            let dur = if sec.style == Style::Circus && !is_phrase_final {
+                (n.dur / 2).max(1)
+            } else if is_phrase_final {
                 n.dur - (n.dur / 4).clamp(1, 4)
             } else if stepwise && n.dur <= 2 {
                 n.dur
@@ -312,6 +317,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
             Style::Waltz => (0, GM_CONTRABASS, GM_STRINGS),
             Style::Rapids => (0, 0, GM_STRINGS),
             Style::Jazz => (GM_EPIANO, GM_ACOUSTIC_BASS, 0),
+            Style::Circus => (GM_ACCORDION, GM_TUBA, 0),
             _ => (0, 0, 0),
         };
         program_change(&mut chd, tick0, CH_CHORDS, chord_prog);
@@ -421,6 +427,41 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
                                 }
                             }
                             t += spbeat;
+                        }
+                    }
+                }
+                Style::Circus => {
+                    let spbeat = sec.meter.steps_per_beat();
+                    let end = span.start + span.len;
+                    let v = chord_voicing(span);
+                    let tuba = root.saturating_sub(12).max(28);
+                    let fifth = tuba + 7;
+                    let mut t = span.start;
+                    let mut i = 0;
+                    while t < end {
+                        let pos = t % spb;
+                        let strong = sec.meter.is_strong(pos);
+                        if strong || (sec.meter.num % 2 == 1 && pos == 0) {
+                            // Oom: tuba root, then fifth on the next strong beat.
+                            let p = if i % 2 == 0 { tuba } else { fifth };
+                            note_pair(&mut bass, CH_BASS, p, bvel + 6, off + t, spbeat / 2);
+                            note_pair(&mut layer, CH_DRUMS, DRUM_LOW_WOODBLOCK, 80, off + t, 1);
+                            i += 1;
+                        } else {
+                            // Pah: accordion stab.
+                            let vel = (50.0 + 40.0 * e).round() as u8;
+                            for p in v.iter().skip(1) {
+                                note_pair(&mut chd, CH_CHORDS, p + 12, vel, off + t, spbeat / 2);
+                            }
+                            note_pair(&mut layer, CH_DRUMS, DRUM_WOODBLOCK, 70, off + t, 1);
+                        }
+                        t += spbeat;
+                    }
+                    // When tense, an extra 8th-note hiccup before the bar line.
+                    if e >= 0.7 {
+                        let t = end - spbeat / 2;
+                        for p in v.iter().skip(1) {
+                            note_pair(&mut chd, CH_CHORDS, p + 12, 60, off + t, spbeat / 4);
                         }
                     }
                 }
@@ -593,7 +634,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
     }
     smf.tracks.push(to_track(chd));
     smf.tracks.push(to_track(bass));
-    if sections.iter().any(|s| matches!(s.style, Style::Orchestral | Style::Brass | Style::Concerto | Style::Waltz | Style::Rapids | Style::Jazz)) {
+    if sections.iter().any(|s| matches!(s.style, Style::Orchestral | Style::Brass | Style::Concerto | Style::Waltz | Style::Rapids | Style::Jazz | Style::Circus)) {
         smf.tracks.push(to_track(layer));
     }
 

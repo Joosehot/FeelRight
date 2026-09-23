@@ -37,6 +37,9 @@ pub enum Style {
     /// Syncopated rhythms with swing; walking bass, Charleston comping,
     /// ride cymbal and hi-hat.
     Jazz,
+    /// Comic oom-pah: tuba on 1 and 3, chord stabs on 2 and 4, woodblock,
+    /// staccato melody.
+    Circus,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
