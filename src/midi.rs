@@ -34,6 +34,34 @@ fn to_track(mut abs: Vec<AbsEvent>) -> Track<'static> {
     track
 }
 
+/// Swing: off-beat 8ths (grid step 2 of a beat) are played late by a
+/// third of a beat, so a pair of 8ths becomes a triplet feel.
+const SWING_TICKS: u32 = 80;
+
+fn swing_tick(step: u32, swing: bool) -> u32 {
+    let mut t = step * TICKS_PER_STEP;
+    if swing && step % 4 == 2 {
+        t += SWING_TICKS;
+    }
+    t
+}
+
+fn note_pair_swing(abs: &mut Vec<AbsEvent>, channel: u8, pitch: u8, vel: u8, start: u32, dur: u32, swing: bool) {
+    let ch = u4::new(channel);
+    let on = swing_tick(start, swing);
+    let off = swing_tick(start + dur, swing).max(on + 1);
+    abs.push(AbsEvent {
+        tick: on,
+        order: 1,
+        kind: TrackEventKind::Midi { channel: ch, message: MidiMessage::NoteOn { key: u7::new(pitch), vel: u7::new(vel) } },
+    });
+    abs.push(AbsEvent {
+        tick: off,
+        order: 0,
+        kind: TrackEventKind::Midi { channel: ch, message: MidiMessage::NoteOff { key: u7::new(pitch), vel: u7::new(0) } },
+    });
+}
+
 fn note_pair(abs: &mut Vec<AbsEvent>, channel: u8, pitch: u8, vel: u8, start: u32, dur: u32) {
     let ch = u4::new(channel);
     abs.push(AbsEvent {
@@ -75,6 +103,11 @@ fn phrase_bounds(bar: u32, phrase_ends: &[u32], spb: u32) -> (u32, u32) {
     let end_bar = phrase_ends.iter().copied().find(|&e| e >= bar).unwrap_or(bar);
     let start_bar = phrase_ends.iter().copied().filter(|&e| e < bar).max().map(|e| e + 1).unwrap_or(0);
     (start_bar * spb, (end_bar + 1) * spb)
+}
+
+/// The chord that follows `span`, if any.
+fn chords_after<'a>(chords: &'a [ChordSpan], span: &ChordSpan) -> Option<&'a crate::theory::Chord> {
+    chords.iter().find(|s| s.start == span.start + span.len).map(|s| &s.chord)
 }
 
 /// Alberti-bass note length: one 8th.
@@ -126,6 +159,11 @@ const GM_STRINGS: u8 = 48;
 const GM_CONTRABASS: u8 = 43;
 const GM_CELLO: u8 = 42;
 const GM_BRASS_SECTION: u8 = 61;
+const GM_EPIANO: u8 = 4;
+const GM_ACOUSTIC_BASS: u8 = 32;
+const CH_DRUMS: u8 = 9;
+const DRUM_RIDE: u8 = 51;
+const DRUM_HIHAT_PEDAL: u8 = 44;
 const GM_TUBA: u8 = 58;
 const GM_TIMPANI: u8 = 47;
 
@@ -199,7 +237,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
                 (n.dur as f32 * 0.9).round().max(1.0) as u32
             };
             let pitch = (n.pitch as i32 + 12 * sec.octave).clamp(0, 127) as u8;
-            note_pair(&mut mel, ch, pitch, vel, off + n.start, dur);
+            note_pair_swing(&mut mel, ch, pitch, vel, off + n.start, dur, sec.style == Style::Jazz);
         }
         melody_tracks.push(mel);
 
@@ -210,6 +248,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
             Style::Concerto => (0, GM_CONTRABASS, GM_STRINGS),
             Style::Waltz => (0, GM_CONTRABASS, GM_STRINGS),
             Style::Rapids => (0, 0, GM_STRINGS),
+            Style::Jazz => (GM_EPIANO, GM_ACOUSTIC_BASS, 0),
             _ => (0, 0, 0),
         };
         program_change(&mut chd, tick0, CH_CHORDS, chord_prog);
@@ -290,6 +329,54 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
                             }
                             t += spbeat;
                         }
+                    }
+                }
+                Style::Jazz => {
+                    let spbeat = sec.meter.steps_per_beat();
+                    let end = span.start + span.len;
+                    let v = chord_voicing(span);
+                    // Comping (Charleston: beat 1 long, "and" of 2 short;
+                    // an extra push before beat 4 when tense), rootless
+                    // voicing an octave up.
+                    let mut t = span.start;
+                    while t < end {
+                        let pos = t % spb;
+                        let vel = (40.0 + 40.0 * e).round() as u8;
+                        let hits: &[(u32, u32)] = if e >= 0.6 { &[(0, 3), (6, 2), (10, 2)] } else { &[(0, 3), (6, 2)] };
+                        for &(at, len) in hits {
+                            if pos == 0 && t + at < end {
+                                for p in v.iter().skip(1) {
+                                    note_pair_swing(&mut chd, CH_CHORDS, p + 12, vel, off + t + at, len, true);
+                                }
+                            }
+                        }
+                        t += spb - pos;
+                    }
+                    // Walking bass: root, 3rd, 5th, then a chromatic
+                    // approach to the next root (or the 5th again).
+                    let next_root = chords_after(sec.chords, span).map(|c| 36 + c.root.0);
+                    let walk = [v[0], v[1], v[2], next_root.map(|r| if r > v[0] { r - 1 } else { r + 1 }).unwrap_or(v[2])];
+                    let mut t = span.start;
+                    let mut i = 0;
+                    while t < end {
+                        let p = walk[i % 4].saturating_sub(12).max(28);
+                        note_pair(&mut bass, CH_BASS, p, bvel, off + t, spbeat);
+                        t += spbeat;
+                        i += 1;
+                    }
+                    // Ride on every beat with the swung skip note on 2 and
+                    // 4; pedal hi-hat on 2 and 4.
+                    let mut t = span.start;
+                    while t < end {
+                        let pos = t % spb;
+                        let beat = pos / spbeat;
+                        let rv = (60.0 + 30.0 * e).round() as u8;
+                        note_pair(&mut layer, CH_DRUMS, DRUM_RIDE, rv, off + t, 1);
+                        if beat % 2 == 1 {
+                            note_pair_swing(&mut layer, CH_DRUMS, DRUM_RIDE, rv.saturating_sub(15), off + t + 2, 1, true);
+                            note_pair(&mut layer, CH_DRUMS, DRUM_HIHAT_PEDAL, 70, off + t, 1);
+                        }
+                        t += spbeat;
                     }
                 }
                 Style::Rapids => {
@@ -411,7 +498,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
     }
     smf.tracks.push(to_track(chd));
     smf.tracks.push(to_track(bass));
-    if sections.iter().any(|s| matches!(s.style, Style::Orchestral | Style::Brass | Style::Concerto | Style::Waltz | Style::Rapids)) {
+    if sections.iter().any(|s| matches!(s.style, Style::Orchestral | Style::Brass | Style::Concerto | Style::Waltz | Style::Rapids | Style::Jazz)) {
         smf.tracks.push(to_track(layer));
     }
 

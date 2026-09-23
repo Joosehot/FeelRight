@@ -34,6 +34,9 @@ pub enum Style {
     /// Classical rhythms; flowing 16th-note piano arpeggios over two
     /// octaves with an octave bass: rapids.
     Rapids,
+    /// Syncopated rhythms with swing; walking bass, Charleston comping,
+    /// ride cymbal and hi-hat.
+    Jazz,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

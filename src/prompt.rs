@@ -148,6 +148,11 @@ pub fn plan(text: &str) -> Plan {
         instruments = vec!["piano".into(), "piano".into(), "piano".into()];
         tempo = tempo.max(120);
     }
+    if has(&t, &["jazz", "swing", "bebop", "blues"]) {
+        style = "jazz".into();
+        instruments = vec!["sax".into(), "epiano".into(), "trumpet".into()];
+        tempo = tempo.max(132);
+    }
     if has(&t, &["pop", "cantopop", "iskelmä", "schlager"]) {
         style = "pop".into();
         instruments = vec!["piano".into(), "flute".into(), "flute".into()];
@@ -174,6 +179,7 @@ pub fn plan(text: &str) -> Plan {
         (&["piano"], "piano"),
         (&["jouset", "strings"], "strings"),
         (&["laulu", "voice", "tenori", "tenor", "vocal"], "voice"),
+        (&["saksofoni", "sax"], "sax"),
     ];
     let mut explicit: Vec<String> = Vec::new();
     for (words, inst) in named {

@@ -1,0 +1,57 @@
+# Full orchestra, grand from the first bar to the last. Tension never
+# drops below 0.6, so the brass keeps hitting, the timpani keep rolling
+# and the piano stays in octaves. E-flat major with a dramatic C minor
+# middle; every section borrows the fanfare theme.
+
+name = "Mahtipontinen"
+
+[[section]]
+name = "A fanfaari"
+chords = "Eb Bb Cm Ab | Eb Bb Ab Bb | Cm Gm Ab Eb | Ab Eb Bb Eb"
+key = "Eb:major"
+tempo = 112
+bars = 16
+seed = 11
+instrument = "trumpet"
+octave = 0
+style = "brass"
+form = "aaba"
+tension = [0.7, 0.7, 0.8, 0.8, 0.7, 0.8, 0.9, 0.9, 0.7, 0.8, 0.9, 1.0, 0.9, 0.8, 0.8, 0.9]
+ends_open = true
+bridge = 1
+refine = 60
+rules_override = { single_climax = { weight = 4.0, min_height = 10 }, density = { weight = 3.0 }, max_leap = { soft_max = 12 } }
+
+[[section]]
+name = "B myrsky"
+chords = "Cm Ab G7 Cm | Fm Cm G7 Cm | Cm Ab Eb Bb | Ab Fm G7 G7"
+key = "C:minor"
+tempo = 120
+bars = 16
+seed = 5
+instrument = "horn"
+octave = 0
+style = "concerto"
+form = "period"
+tension = [0.6, 0.7, 0.7, 0.8, 0.7, 0.8, 0.9, 0.9, 0.7, 0.8, 1.0, 1.0, 0.9, 0.8, 0.8, 0.9]
+ends_open = true
+bridge = 2
+theme_from = "A fanfaari"
+refine = 60
+rules_override = { single_climax = { weight = 4.0, min_height = 10 }, density = { weight = 3.0 }, max_leap = { soft_max = 12 }, syncopation = { threshold = 0.5 } }
+
+[[section]]
+name = "C tutti"
+chords = "Eb Bb Cm Ab | Eb Bb Ab Bb | Cm Gm Ab Eb | Ab Bb Eb Eb"
+key = "Eb:major"
+tempo = 116
+bars = 16
+seed = 11
+instrument = "brass"
+octave = 0
+style = "brass"
+form = "aaba"
+tension = [0.8, 0.8, 0.9, 0.9, 0.8, 0.9, 1.0, 1.0, 0.8, 0.9, 1.0, 1.0, 1.0, 0.9, 0.8, 0.6]
+theme_from = "A fanfaari"
+refine = 60
+rules_override = { single_climax = { weight = 4.0, min_height = 10 }, density = { weight = 3.0 }, max_leap = { soft_max = 12 } }

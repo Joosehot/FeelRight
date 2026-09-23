@@ -1,0 +1,54 @@
+# Jazz tune: an AABA standard in F with ii-V-I changes. Sax takes the head,
+# electric piano comps Charleston, walking bass, ride and hi-hat, swing
+# 8ths. Trumpet takes the bridge, sax returns.
+
+name = "Swing F"
+
+[[section]]
+name = "A head"
+chords = "Fmaj7 Dm7 Gm7 C7 | Fmaj7 Dm7 Gm7 C7 | Am7 D7 Gm7 C7 | Fmaj7 Dm7 Gm7 C7"
+key = "F:major"
+tempo = 138
+bars = 16
+seed = 3
+instrument = "sax"
+octave = 0
+style = "jazz"
+form = "aaba"
+tension = [0.4, 0.5, 0.5, 0.6, 0.5, 0.6, 0.7, 0.7, 0.5, 0.6, 0.8, 0.9, 0.7, 0.6, 0.5, 0.6]
+ends_open = true
+refine = 40
+rules_override = { syncopation = { threshold = 0.3, weight = 2.0 }, nct_types = { anticipation = 0.6, escape = 0.4 }, mostly_steps = { min_ratio = 0.45 }, guide_tones = { weight = 2.0 } }
+
+[[section]]
+name = "B bridge"
+chords = "Cm7 F7 Bbmaj7 Bbmaj7 | Am7 D7 Gm7 C7"
+key = "Bb:major"
+tempo = 138
+bars = 8
+seed = 9
+instrument = "trumpet"
+octave = 0
+style = "jazz"
+form = "period"
+tension = [0.5, 0.6, 0.6, 0.7, 0.7, 0.8, 0.9, 0.7]
+ends_open = true
+theme_from = "A head"
+refine = 40
+rules_override = { syncopation = { threshold = 0.3, weight = 2.0 }, nct_types = { anticipation = 0.6, escape = 0.4 }, mostly_steps = { min_ratio = 0.45 }, guide_tones = { weight = 2.0 } }
+
+[[section]]
+name = "C head out"
+chords = "Fmaj7 Dm7 Gm7 C7 | Fmaj7 Dm7 Gm7 C7 | Am7 D7 Gm7 C7 | Gm7 C7 Fmaj7 Fmaj7"
+key = "F:major"
+tempo = 138
+bars = 16
+seed = 3
+instrument = "sax"
+octave = 0
+style = "jazz"
+form = "aaba"
+tension = [0.5, 0.6, 0.6, 0.7, 0.6, 0.7, 0.8, 0.8, 0.6, 0.7, 0.9, 1.0, 0.8, 0.6, 0.4, 0.2]
+theme_from = "A head"
+refine = 40
+rules_override = { syncopation = { threshold = 0.3, weight = 2.0 }, nct_types = { anticipation = 0.6, escape = 0.4 }, mostly_steps = { min_ratio = 0.45 }, guide_tones = { weight = 2.0 } }
