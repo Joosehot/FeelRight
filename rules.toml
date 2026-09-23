@@ -322,3 +322,13 @@ weight = 3.0
 breakable = false
 tension = 0.0
 min_drop = 3           # semitones from the phrase peak to its last note
+
+# ---- Dissonance control --------------------------------------------------
+
+# Rule 37: a non-chord tone a semitone from a chord tone, held or on a
+# strong beat, must resolve by step.
+[rules.clash]
+weight = 3.0
+breakable = true
+tension = 0.8
+min_dur = 4            # steps; from a quarter note up the clash is exposed

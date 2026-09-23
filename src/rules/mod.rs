@@ -15,6 +15,7 @@ pub mod balanced_direction;
 pub mod breathing;
 pub mod callback;
 pub mod chord_tones_on_strong_beats;
+pub mod clash;
 pub mod consecutive_leaps;
 pub mod delayed_resolution;
 pub mod density;
@@ -186,6 +187,8 @@ pub fn all_rules() -> Vec<Box<dyn Rule>> {
         Box::new(arrival::Arrival),                                    // 35
         // Phrasing
         Box::new(phrase_arch::PhraseArch),                             // 36
+        // Dissonance control
+        Box::new(clash::Clash),                                        // 37
     ]
 }
 

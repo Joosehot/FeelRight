@@ -79,6 +79,9 @@ fn slot_choices(input: &SearchInput, step: u32, prev: Option<u8>, max_interval: 
         let mut w = 1.0 / (1.0 + dist as f32 / 2.0);
         if in_chord {
             w *= 1.5;
+        } else if chord.tones.iter().any(|t| matches!(t.interval_to(pc), 1 | 11)) {
+            // A semitone against a chord tone: only as a quick passing note.
+            w *= 0.3;
         }
         if dist == 0 {
             w *= 0.4;
