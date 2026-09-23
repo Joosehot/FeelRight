@@ -35,6 +35,24 @@ pub struct SearchInput<'a> {
     pub seed: u64,
     pub form: &'a Form,
     pub ends_open: bool,
+    /// Opening motif borrowed from another section (with the pitch its
+    /// first note had there), used to seed bar 1 with transformations.
+    pub theme: Option<&'a Theme>,
+}
+
+#[derive(Clone, Debug)]
+pub struct Theme {
+    pub motif: Motif,
+    pub first_pitch: u8,
+}
+
+impl Theme {
+    pub fn from_melody(key: &Key, melody: &Melody, meter: Meter) -> Option<Theme> {
+        let bar0 = melody.bar_events(0, meter);
+        let motif = Motif::from_events(key, &bar0)?;
+        let first_pitch = bar0.iter().find_map(Event::note)?.pitch;
+        Some(Theme { motif, first_pitch })
+    }
 }
 
 /// Pitch choices for one slot: chord tones always; diatonic scale tones on
@@ -113,15 +131,37 @@ fn transformed_candidates(input: &SearchInput, src: &[Event], bar: u32, fragment
     let Some(m) = Motif::from_events(&input.key, src) else {
         return vec![];
     };
+    motif_candidates(input, &m, m.base, bar, if fragment { Shapes::Fragment } else { Shapes::Repeat })
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Shapes {
+    Repeat,
+    Fragment,
+    /// A borrowed theme keeps its rhythm and contour; only ornaments,
+    /// extensions and truncation are allowed.
+    Theme,
+}
+
+/// Transformations of a borrowed theme, realized in this section's key
+/// around the pitch the theme started on.
+fn theme_candidates(input: &SearchInput, theme: &Theme, bar: u32) -> Vec<Vec<Event>> {
+    let center = crate::motif::scale_index(&input.key, theme.first_pitch);
+    motif_candidates(input, &theme.motif, center, bar, Shapes::Theme)
+}
+
+fn motif_candidates(input: &SearchInput, m: &Motif, center: i32, bar: u32, kind: Shapes) -> Vec<Vec<Event>> {
     let spb = input.meter.steps_per_bar();
     let start = bar * spb;
     let key = &input.key;
 
     // Base scale indices to try: same, and shifted by up to a third either
     // way (transposition following the harmony).
-    let bases: Vec<i32> = (-2..=2).map(|d| m.base + d).collect();
+    let bases: Vec<i32> = (-2..=2).map(|d| center + d).collect();
 
-    let mut shapes: Vec<Motif> = if fragment {
+    let mut shapes: Vec<Motif> = if kind == Shapes::Theme {
+        vec![m.clone(), m.ornamented(), m.extended(-1), m.extended(1), m.truncated()]
+    } else if kind == Shapes::Fragment {
         vec![
             m.diminished(1),
             m.diminished(-1),
@@ -193,9 +233,13 @@ pub fn beam_search(input: &SearchInput, cfg: &Config, rules: &[Box<dyn Rule>]) -
                     candidates.extend(transformed_candidates(input, &src, bar, matches!(role, Role::Fragment { .. })));
                     k / 4
                 }
+                Role::Idea if bar == 0 && input.theme.is_some() => {
+                    candidates.extend(theme_candidates(input, input.theme.unwrap(), bar));
+                    0
+                }
                 _ => k,
             };
-            for _ in 0..fresh.max(1) {
+            for _ in 0..fresh {
                 candidates.push(sample_bar(&mut rng, input, bar, &rhythm[bar as usize], prev, max_iv));
             }
             for events in candidates {
@@ -243,7 +287,7 @@ mod tests {
         let (chords, key, meter, form) = setup();
         let cfg = Config::default_config();
         let rules = all_rules();
-        let input = SearchInput { chords: &chords, key, meter, bars: 8, tension: &[], style: Style::Classical, seed: 3, form: &form, ends_open: false };
+        let input = SearchInput { chords: &chords, key, meter, bars: 8, tension: &[], style: Style::Classical, seed: 3, form: &form, ends_open: false, theme: None };
         let (a, ea) = beam_search(&input, &cfg, &rules);
         let (b, _) = beam_search(&input, &cfg, &rules);
         assert_eq!(a, b);
@@ -257,7 +301,7 @@ mod tests {
         let cfg = Config::default_config();
         let rules = all_rules();
         for seed in 1..=3 {
-            let input = SearchInput { chords: &chords, key, meter, bars: 8, tension: &[], style: Style::Classical, seed, form: &form, ends_open: false };
+            let input = SearchInput { chords: &chords, key, meter, bars: 8, tension: &[], style: Style::Classical, seed, form: &form, ends_open: false, theme: None };
             let (_, beam_eval) = beam_search(&input, &cfg, &rules);
             let random = random_chord_tone_melody(&chords, meter, 8, seed, Style::Classical);
             let rand_eval = score_prefix(&input, &random, true, &cfg, &rules);
@@ -266,9 +310,23 @@ mod tests {
     }
 
     #[test]
+    fn borrowed_theme_shapes_the_opening() {
+        let (chords, key, meter, form) = setup();
+        let cfg = Config::default_config();
+        let rules = all_rules();
+        let base = SearchInput { chords: &chords, key, meter, bars: 8, tension: &[], style: Style::Classical, seed: 3, form: &form, ends_open: false, theme: None };
+        let (src, _) = beam_search(&base, &cfg, &rules);
+        let theme = Theme::from_melody(&key, &src, meter).unwrap();
+        let with = SearchInput { seed: 99, theme: Some(&theme), ..base };
+        let (m, _) = beam_search(&with, &cfg, &rules);
+        let sim = crate::motif::similarity(&src.bar_events(0, meter), &m.bar_events(0, meter));
+        assert!(sim >= 0.5, "similarity {sim}");
+    }
+
+    #[test]
     fn transformations_fill_the_bar() {
         let (chords, key, meter, form) = setup();
-        let input = SearchInput { chords: &chords, key, meter, bars: 8, tension: &[], style: Style::Classical, seed: 1, form: &form, ends_open: false };
+        let input = SearchInput { chords: &chords, key, meter, bars: 8, tension: &[], style: Style::Classical, seed: 1, form: &form, ends_open: false, theme: None };
         let src = vec![
             Event::Note(Note { pitch: 69, start: 0, dur: 4 }),
             Event::Note(Note { pitch: 71, start: 4, dur: 4 }),

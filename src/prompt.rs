@@ -383,6 +383,9 @@ pub fn to_suite(plan: &Plan) -> SuiteFile {
             melody: None,
             transpose: 0,
             ends_open: !last,
+            theme_from: if role == 'C' && plan.sections.contains(&'A') { Some("A".into()) } else { None },
+            bridge: if last { 0 } else { 1 },
+            rules_override: None,
         });
     }
     SuiteFile { name: plan.name.clone(), section: sections }

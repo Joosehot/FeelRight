@@ -54,9 +54,14 @@ A suite file lists `[[section]]` tables with `chords`, `key`, `meter`,
 `tempo`, `bars`, `tension`, `seed`, `instrument`, `octave`, `style`
 (`classical`, `pop`, `orchestral`, `brass`, `concerto`, `waltz`, `rapids`),
 `form`, and optionally `melody` (a fixed tune in `C4:4 D4:2 r:2` notation,
-with `transpose`) and `ends_open = true` when the section leads into the
-next one. `--explore N` tries N seeds per section and keeps the best by
-evaluator score. See `examples/*.toml`.
+with `transpose`), `ends_open = true` when the section leads into the
+next one, `bridge = N` to append N bars on the dominant of the next
+section's key, `theme_from = "A"` to borrow section A's opening motif
+(transformed to this section's key), and `rules_override` for per-section
+weight or parameter changes, e.g.
+`rules_override = { max_leap = { soft_max = 12 }, density = { weight = 3.0 } }`.
+`--explore N` tries N seeds per section and keeps the best by evaluator
+score. See `examples/*.toml`.
 
 ## Prompt translator
 

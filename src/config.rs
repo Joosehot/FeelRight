@@ -148,6 +148,57 @@ impl Config {
         Self::from_str(&text)
     }
 
+    /// Apply a table of overrides such as
+    /// `{ max_leap = { soft_max = 12 }, search = { tension_lambda = 8 } }`.
+    /// Rule keys `weight`, `breakable`, `tension` and any parameter are
+    /// accepted; `search` accepts its numeric fields.
+    pub fn with_overrides(&self, table: &toml::Table) -> Result<Config> {
+        let mut cfg = self.clone();
+        for (name, value) in table {
+            let sub = value
+                .as_table()
+                .ok_or_else(|| anyhow!("override '{name}' must be a table"))?;
+            if name == "search" {
+                for (k, v) in sub {
+                    let f = v.as_float().or_else(|| v.as_integer().map(|i| i as f64))
+                        .ok_or_else(|| anyhow!("search.{k} must be a number"))?;
+                    match k.as_str() {
+                        "beam" => cfg.search.beam = f as usize,
+                        "candidates_per_bar" => cfg.search.candidates_per_bar = f as usize,
+                        "max_interval" => cfg.search.max_interval = f as i32,
+                        "tension_lambda" => cfg.search.tension_lambda = f as f32,
+                        "breakable_discount" => cfg.search.breakable_discount = f as f32,
+                        other => return Err(anyhow!("unknown search override '{other}'")),
+                    }
+                }
+                continue;
+            }
+            let rc = cfg
+                .rules
+                .get_mut(name)
+                .ok_or_else(|| anyhow!("override for unknown rule '{name}'"))?;
+            for (k, v) in sub {
+                if k == "breakable" {
+                    rc.breakable = v.as_bool().ok_or_else(|| anyhow!("{name}.breakable must be a bool"))?;
+                    continue;
+                }
+                let f = v.as_float().or_else(|| v.as_integer().map(|i| i as f64))
+                    .ok_or_else(|| anyhow!("{name}.{k} must be a number"))? as f32;
+                match k.as_str() {
+                    "weight" => rc.weight = f,
+                    "tension" => rc.tension = f,
+                    _ => {
+                        if !rc.params.contains_key(k) {
+                            return Err(anyhow!("rule '{name}' has no parameter '{k}'"));
+                        }
+                        rc.params.insert(k.clone(), f);
+                    }
+                }
+            }
+        }
+        Ok(cfg)
+    }
+
     pub fn rule(&self, name: &str) -> Result<&RuleConfig> {
         self.rules
             .get(name)
@@ -178,6 +229,18 @@ mod tests {
         let cfg = Config::default_config();
         cfg.validate(&crate::rules::all_rules()).unwrap();
         assert!(cfg.rule("chord_tones_on_strong_beats").unwrap().weight > 0.0);
+    }
+
+    #[test]
+    fn overrides_apply_and_validate() {
+        let cfg = Config::default_config();
+        let t: toml::Table = toml::from_str("max_leap = { soft_max = 12, weight = 0.5 }\nsearch = { tension_lambda = 8 }").unwrap();
+        let c = cfg.with_overrides(&t).unwrap();
+        assert_eq!(c.rule("max_leap").unwrap().param("soft_max"), 12.0);
+        assert_eq!(c.rule("max_leap").unwrap().weight, 0.5);
+        assert_eq!(c.search.tension_lambda, 8.0);
+        let bad: toml::Table = toml::from_str("max_leap = { nope = 1 }").unwrap();
+        assert!(cfg.with_overrides(&bad).is_err());
     }
 
     #[test]

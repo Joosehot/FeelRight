@@ -193,6 +193,7 @@ fn generate(args: GenerateArgs) -> Result<()> {
                     seed,
                     form: &form,
                     ends_open: false,
+                    theme: None,
                 };
                 search::beam_search(&input, &cfg, &rule_set).0
             }

@@ -6,7 +6,9 @@ use crate::form::{Form, Template};
 use crate::model::{Melody, Meter, Style};
 use crate::parser::{self, ChordSpan};
 use crate::rules::{self, Evaluation, Rule};
-use crate::search::{self, SearchInput};
+use crate::search::{self, SearchInput, Theme};
+use crate::theory::{Chord, Key, Quality};
+use std::collections::HashMap;
 use crate::{midi, tension};
 use anyhow::{bail, Context as _, Result};
 use clap::ValueEnum;
@@ -52,6 +54,17 @@ pub struct SuiteSection {
     /// (dominant-side) ending instead of the tonic.
     #[serde(default)]
     pub ends_open: bool,
+    /// Borrow the opening motif of the named section (transformed to this
+    /// section's key and harmony).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub theme_from: Option<String>,
+    /// Extra bars appended on the dominant of the next section's key,
+    /// leading into it. Forces an open ending.
+    #[serde(default)]
+    pub bridge: u32,
+    /// Per-section rule overrides, e.g. `max_leap = { soft_max = 12 }`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rules_override: Option<toml::Table>,
 }
 
 fn default_meter() -> String {
@@ -106,6 +119,7 @@ pub fn gm_program(name: &str) -> Result<u8> {
 }
 
 pub struct Rendered {
+    pub key: Key,
     pub melody: Melody,
     pub chords: Vec<ChordSpan>,
     pub meter: Meter,
@@ -118,37 +132,72 @@ pub struct Rendered {
     pub eval: Evaluation,
 }
 
+/// What a section needs from its neighbours.
+#[derive(Default)]
+pub struct Neighbours<'a> {
+    /// Key of the next section (for a bridge).
+    pub next_key: Option<Key>,
+    /// Borrowed opening motif.
+    pub theme: Option<&'a Theme>,
+}
+
 /// Generate (or parse) one section's melody and score it.
-pub fn render_section(sec: &SuiteSection, cfg: &Config, rules: &[Box<dyn Rule>]) -> Result<Rendered> {
+pub fn render_section(sec: &SuiteSection, nb: &Neighbours, base_cfg: &Config, rules: &[Box<dyn Rule>]) -> Result<Rendered> {
+    let cfg_owned;
+    let cfg = match &sec.rules_override {
+        Some(t) => {
+            cfg_owned = base_cfg.with_overrides(t).with_context(|| format!("section '{}' rules_override", sec.name))?;
+            &cfg_owned
+        }
+        None => base_cfg,
+    };
     let key = parser::parse_key(&sec.key)?;
     let meter = parser::parse_meter(&sec.meter)?;
-    let spans = parser::parse_progression(&sec.chords, meter, sec.bars)?;
-    let tension = sec.tension.clone().unwrap_or_else(|| tension::default_curve(sec.bars));
+    let mut spans = parser::parse_progression(&sec.chords, meter, sec.bars)?;
+    let mut tension = sec.tension.clone().unwrap_or_else(|| tension::default_curve(sec.bars));
     if tension.len() as u32 != sec.bars {
         bail!("section '{}': tension needs {} values, got {}", sec.name, sec.bars, tension.len());
     }
+    let mut bars = sec.bars;
+    let mut ends_open = sec.ends_open;
+    if sec.bridge > 0 {
+        let Some(next) = nb.next_key else {
+            bail!("section '{}' has a bridge but no following section", sec.name);
+        };
+        // Dominant seventh of the next key, held for the bridge bars.
+        let dom = Chord::new(next.tonic.add(7), Quality::Dom7);
+        let spb = meter.steps_per_bar();
+        for b in 0..sec.bridge {
+            spans.push(ChordSpan { chord: dom.clone(), start: (bars + b) * spb, len: spb });
+            let last = *tension.last().unwrap_or(&0.5);
+            tension.push((last + 0.15).min(0.9));
+        }
+        bars += sec.bridge;
+        ends_open = true;
+    }
     let style = Style::from_str(&sec.style, true).map_err(|e| anyhow::anyhow!(e))?;
     let template = Template::from_str(&sec.form, true).map_err(|e| anyhow::anyhow!(e))?;
-    let form = Form::plan(template, sec.bars);
+    let form = Form::plan(template, bars);
     let input = SearchInput {
         chords: &spans,
         key,
         meter,
-        bars: sec.bars,
+        bars,
         tension: &tension,
         style,
         seed: sec.seed,
         form: &form,
-        ends_open: sec.ends_open,
+        ends_open,
+        theme: nb.theme,
     };
     let (melody, eval) = match &sec.melody {
         Some(text) => {
             let melody = parser::parse_melody(text, sec.transpose)?;
-            let expected = sec.bars * meter.steps_per_bar();
+            let expected = bars * meter.steps_per_bar();
             if melody.total_steps() != expected {
                 bail!(
                     "section '{}': fixed melody is {} steps, but {} bars need {}",
-                    sec.name, melody.total_steps(), sec.bars, expected
+                    sec.name, melody.total_steps(), bars, expected
                 );
             }
             let ctx = rules::Context {
@@ -156,11 +205,11 @@ pub fn render_section(sec: &SuiteSection, cfg: &Config, rules: &[Box<dyn Rule>])
                 chords: &spans,
                 key,
                 meter,
-                bars: sec.bars,
+                bars,
                 tension: &tension,
                 complete: true,
                 form: &form,
-                ends_open: sec.ends_open,
+                ends_open,
             };
             let eval = rules::evaluate(&ctx, cfg, rules);
             (melody, eval)
@@ -168,6 +217,7 @@ pub fn render_section(sec: &SuiteSection, cfg: &Config, rules: &[Box<dyn Rule>])
         None => search::beam_search(&input, cfg, rules),
     };
     Ok(Rendered {
+        key,
         melody,
         chords: spans,
         meter,
@@ -181,12 +231,35 @@ pub fn render_section(sec: &SuiteSection, cfg: &Config, rules: &[Box<dyn Rule>])
     })
 }
 
+fn next_key(file: &SuiteFile, i: usize) -> Result<Option<Key>> {
+    match file.section.get(i + 1) {
+        Some(n) => Ok(Some(parser::parse_key(&n.key)?)),
+        None => Ok(None),
+    }
+}
+
+fn theme_for<'a>(sec: &SuiteSection, themes: &'a HashMap<String, Theme>) -> Result<Option<&'a Theme>> {
+    match &sec.theme_from {
+        None => Ok(None),
+        Some(name) => themes
+            .get(name)
+            .map(Some)
+            .ok_or_else(|| anyhow::anyhow!("section '{}': theme_from '{name}' is not an earlier section", sec.name)),
+    }
+}
+
 /// Render every section and write the MIDI. Returns the rendered
 /// sections for reporting.
 pub fn render(file: &SuiteFile, out: &Path, cfg: &Config, rules: &[Box<dyn Rule>]) -> Result<Vec<Rendered>> {
-    let mut rendered = Vec::new();
-    for sec in &file.section {
-        rendered.push(render_section(sec, cfg, rules)?);
+    let mut rendered: Vec<Rendered> = Vec::new();
+    let mut themes: HashMap<String, Theme> = HashMap::new();
+    for (i, sec) in file.section.iter().enumerate() {
+        let nb = Neighbours { next_key: next_key(file, i)?, theme: theme_for(sec, &themes)? };
+        let r = render_section(sec, &nb, cfg, rules)?;
+        if let Some(t) = Theme::from_melody(&r.key, &r.melody, r.meter) {
+            themes.insert(sec.name.clone(), t);
+        }
+        rendered.push(r);
     }
     let mut offset = 0;
     let mut sections = Vec::new();
@@ -210,7 +283,7 @@ pub fn render(file: &SuiteFile, out: &Path, cfg: &Config, rules: &[Box<dyn Rule>
 }
 
 pub fn total_bars(file: &SuiteFile) -> u32 {
-    file.section.iter().map(|s| s.bars).sum()
+    file.section.iter().map(|s| s.bars + s.bridge).sum()
 }
 
 /// For every generated section, try `seeds` seeds and keep the best by
@@ -218,23 +291,32 @@ pub fn total_bars(file: &SuiteFile) -> u32 {
 pub fn explore(file: &SuiteFile, seeds: u64, cfg: &Config, rules: &[Box<dyn Rule>]) -> Result<(SuiteFile, Vec<String>)> {
     let mut best_file = file.clone();
     let mut log = Vec::new();
+    let mut themes: HashMap<String, Theme> = HashMap::new();
     for (i, sec) in file.section.iter().enumerate() {
+        let nb = Neighbours { next_key: next_key(file, i)?, theme: theme_for(sec, &themes)? };
         if sec.melody.is_some() {
+            let r = render_section(sec, &nb, cfg, rules)?;
+            if let Some(t) = Theme::from_melody(&r.key, &r.melody, r.meter) {
+                themes.insert(sec.name.clone(), t);
+            }
             continue;
         }
-        let mut best: Option<(u64, f32)> = None;
+        let mut best: Option<(u64, f32, Rendered)> = None;
         let mut tried = Vec::new();
         for s in 0..seeds {
             let seed = sec.seed + s;
             let mut trial = sec.clone();
             trial.seed = seed;
-            let r = render_section(&trial, cfg, rules)?;
+            let r = render_section(&trial, &nb, cfg, rules)?;
             tried.push((seed, r.eval.total));
-            if best.map(|b| r.eval.total > b.1).unwrap_or(true) {
-                best = Some((seed, r.eval.total));
+            if best.as_ref().map(|b| r.eval.total > b.1).unwrap_or(true) {
+                best = Some((seed, r.eval.total, r));
             }
         }
-        if let Some((seed, score)) = best {
+        if let Some((seed, score, r)) = best {
+            if let Some(t) = Theme::from_melody(&r.key, &r.melody, r.meter) {
+                themes.insert(sec.name.clone(), t);
+            }
             best_file.section[i].seed = seed;
             let label = if sec.name.is_empty() { format!("{}", i + 1) } else { sec.name.clone() };
             let worst = tried.iter().map(|t| t.1).fold(f32::INFINITY, f32::min);
