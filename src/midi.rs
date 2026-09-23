@@ -138,6 +138,69 @@ fn alberti(span: &ChordSpan) -> Vec<(u32, u8)> {
     out
 }
 
+/// Voice-led voicing: pick the inversion (any octave placement within
+/// `lo..=hi`, ascending) whose notes move least from `prev`.
+fn voice_lead(span: &ChordSpan, prev: Option<&[u8]>, lo: u8, hi: u8) -> Vec<u8> {
+    let tones = &span.chord.tones;
+    let n = tones.len();
+    let mut best: Option<(i32, Vec<u8>)> = None;
+    for rot in 0..n {
+        for base_oct in 0..3u8 {
+            // Lowest note of this inversion placed in the octave above lo.
+            let first_pc = tones[rot].0;
+            let mut low = lo - lo % 12 + first_pc + 12 * base_oct;
+            while low < lo {
+                low += 12;
+            }
+            if low > hi {
+                continue;
+            }
+            let mut v = vec![low];
+            for k in 1..n {
+                let pc = tones[(rot + k) % n].0;
+                let mut p = v[k - 1] + ((pc as i32 - v[k - 1] as i32).rem_euclid(12)) as u8;
+                if p == v[k - 1] {
+                    p += 12;
+                }
+                v.push(p);
+            }
+            if *v.last().unwrap() > hi + 7 {
+                continue;
+            }
+            let cost = match prev {
+                Some(pv) => {
+                    let m = v.len().min(pv.len());
+                    (0..m).map(|i| (v[i] as i32 - pv[i] as i32).abs()).sum::<i32>()
+                        + (v[0] as i32 - lo as i32 - 7).abs() / 4
+                }
+                None => (v[0] as i32 - lo as i32 - 5).abs(),
+            };
+            if best.as_ref().map(|b| cost < b.0).unwrap_or(true) {
+                best = Some((cost, v));
+            }
+        }
+    }
+    best.map(|b| b.1).unwrap_or_else(|| chord_voicing(span))
+}
+
+/// Alberti figure over a given voicing: low, high, mid, high.
+fn alberti_on(v: &[u8], start: u32, len: u32, step: u32) -> Vec<(u32, u8)> {
+    let (low, mid, high) = match v.len() {
+        4 => (v[0], v[1], v[3]),
+        _ => (v[0], v[1], v[2]),
+    };
+    let cycle = [low, high, mid, high];
+    let mut out = Vec::new();
+    let mut t = start;
+    let mut i = 0;
+    while t + step <= start + len {
+        out.push((t, cycle[i % 4]));
+        t += step;
+        i += 1;
+    }
+    out
+}
+
 /// One section of a piece, rendered at `offset` grid steps.
 pub struct Section<'a> {
     pub melody: &'a Melody,
@@ -254,10 +317,13 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
         program_change(&mut chd, tick0, CH_CHORDS, chord_prog);
         program_change(&mut bass, tick0, CH_BASS, bass_prog);
         program_change(&mut layer, tick0, CH_LAYER, layer_prog);
+        let mut prev_voicing: Option<Vec<u8>> = None;
         for span in sec.chords {
             let e = sec.energy.get((span.start / spb) as usize).copied().unwrap_or(0.5);
             let root = 36 + span.chord.root.0;
             let bvel = (BASS_VEL_LO as f32 + (BASS_VEL_HI - BASS_VEL_LO) as f32 * e).round() as u8;
+            let bar = span.start / spb;
+            let phrase_end_bar = sec.phrase_ends.contains(&bar);
             match sec.style {
                 Style::Pop => {
                     for p in chord_voicing(span) {
@@ -266,11 +332,38 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
                     note_pair(&mut bass, CH_BASS, root, bvel, off + span.start, span.len);
                 }
                 Style::Classical => {
-                    let vel = (44.0 + 36.0 * e).round() as u8;
-                    for (start, p) in alberti(span) {
-                        note_pair(&mut chd, CH_CHORDS, p, vel, off + start, ALBERTI_STEP);
+                    // Voice-led left hand in the small octave; texture by
+                    // tension: calm = held chord, mid = Alberti 8ths,
+                    // tense = Alberti 16ths. Phrase-final bars hold.
+                    let v = voice_lead(span, prev_voicing.as_deref(), 48, 60);
+                    let vel = (40.0 + 36.0 * e).round() as u8;
+                    let spbeat = sec.meter.steps_per_beat();
+                    let end = span.start + span.len;
+                    if phrase_end_bar || e < 0.3 {
+                        for p in &v {
+                            note_pair(&mut chd, CH_CHORDS, *p, vel, off + span.start, span.len);
+                        }
+                        note_pair(&mut bass, CH_BASS, root, bvel, off + span.start, span.len);
+                    } else {
+                        let step = if e >= 0.75 { 1 } else { ALBERTI_STEP };
+                        for (start, p) in alberti_on(&v, span.start, span.len, step) {
+                            let accent = if (start - span.start) % spbeat == 0 { 6 } else { 0 };
+                            note_pair(&mut chd, CH_CHORDS, p, vel + accent, off + start, step);
+                        }
+                        // Classical bass: root on strong beats, fifth on
+                        // the others, in half notes.
+                        let fifth = root + 7;
+                        let mut t = span.start;
+                        let mut i = 0;
+                        while t < end {
+                            let len = (2 * spbeat).min(end - t);
+                            let p = if i % 2 == 0 { root } else { fifth.min(root + 7) };
+                            note_pair(&mut bass, CH_BASS, p, bvel, off + t, len);
+                            t += len;
+                            i += 1;
+                        }
                     }
-                    note_pair(&mut bass, CH_BASS, root, bvel, off + span.start, span.len);
+                    prev_voicing = Some(v);
                 }
                 Style::Brass => {
                     // Texture follows the tension of the bar:
@@ -468,9 +561,11 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
                     // Sustained string chord, voiced an octave up from the
                     // block voicing so it sits under the melody.
                     let vel = (40.0 + 40.0 * e).round() as u8;
-                    for p in chord_voicing(span) {
-                        note_pair(&mut chd, CH_CHORDS, p + 12, vel, off + span.start, span.len);
+                    let v = voice_lead(span, prev_voicing.as_deref(), 55, 67);
+                    for p in &v {
+                        note_pair(&mut chd, CH_CHORDS, *p, vel, off + span.start, span.len);
                     }
+                    prev_voicing = Some(v);
                     // Contrabass: root on every strong beat.
                     let spbeat = sec.meter.steps_per_beat();
                     let mut t = span.start;
