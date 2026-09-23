@@ -1,6 +1,6 @@
-# melody
+# FeelRight
 
-A small, deterministic melody engine. Given a chord progression, a key and
+FeelRight is a small, deterministic melody engine (binary name `melody`). Given a chord progression, a key and
 an optional tension curve, it searches for the best melody with a
 hand-crafted evaluation function (35 rules, each in its own file under
 `src/rules/`, weights in `rules.toml`) and bar-by-bar beam search. No
@@ -76,6 +76,55 @@ as `d-molli` or `Bb major`, a `120 bpm` tempo and section letters (`ABC`,
 `ABA`, `ABCA`) are honoured. The evaluator then searches seeds per
 section, renders the best, and `--save-suite` writes the chosen suite as
 TOML for hand editing.
+
+## Working with an AI assistant
+
+The engine itself contains no neural network and no language model. It is
+a deterministic instrument: the same suite file and seeds always produce
+the same notes, and every note is checked and explained by the rules.
+
+The intended workflow puts the AI *outside* the engine, as the composer
+who writes its instructions:
+
+1. **You describe the music** in plain language to an assistant such as
+   Claude Code, e.g. "a Dvořák-style brass piece, chorale, dance, tutti".
+2. **The assistant writes a suite file** (`examples/*.toml`): chord
+   progressions, keys, tempos, forms, instruments, per-bar tension curves,
+   `theme_from` links between sections, bridges, and `rules_override`
+   tables that bend the rules toward the style (allow wide leaps for an
+   aria, forbid syncopation for Bach, reward sequences, and so on).
+3. **The engine renders it**: `melody suite --file piece.toml --explore 8
+   --out piece.mid`. Seed exploration and refinement pick and polish the
+   melody by the evaluator's score.
+4. **The assistant reads `--explain`** (target vs observed tension per
+   bar, broken rules, weak spots) and revises the suite. You listen and
+   steer: "the middle section should breathe more", "make the ending
+   grander". Repeat.
+
+Every piece in `examples/` was made exactly this way in one session with
+Claude Code. The assistant never wrote a note; it wrote instructions, the
+engine wrote the notes.
+
+`melody prompt "..."` is a small built-in stand-in for step 2 (a keyword
+table, Finnish and English) for use without an assistant. `melody rate`
+and `melody tune` close the loop on taste: your A/B choices and a corpus
+of known melodies re-weight `rules.toml`.
+
+A minimal script that automates step 2 with the Claude API:
+
+```python
+import anthropic, subprocess
+client = anthropic.Anthropic()
+context = open("README.md").read() + open("examples/orkesteri2.toml").read()
+msg = client.messages.create(
+    model="claude-sonnet-5", max_tokens=2000,
+    system="You write FeelRight suite files. Reply with TOML only.
+" + context,
+    messages=[{"role": "user", "content": "a sad cello piece, ABA, E minor"}],
+)
+open("piece.toml", "w").write(msg.content[0].text)
+subprocess.run(["melody", "suite", "--file", "piece.toml", "--out", "piece.mid", "--explore", "8"])
+```
 
 ## Layout
 
