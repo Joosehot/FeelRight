@@ -1,0 +1,324 @@
+# Melody engine rule weights and parameters.
+# Every rule has: weight (multiplier on its -1..1 score), breakable (may be
+# violated for tension), tension (tension added to a bar when broken there).
+# Other keys are rule-specific parameters. No numbers live in rule code.
+
+[search]
+beam = 64
+candidates_per_bar = 32   # pitch sequences sampled per beam entry per bar
+max_interval = 9          # largest leap the sampler proposes (semitones)
+tension_lambda = 6.0      # weight of -sum (observed - target)^2
+breakable_discount = 0.8  # share of a breakable rule penalty forgiven at target 1.0
+
+# Observed-tension estimate: weighted sum of components, divided by scale,
+# clamped to 0..1.
+[tension]
+broken_rules = 1.0
+dissonance = 1.2
+register = 0.8
+leap = 0.6
+density = 0.8
+syncopation = 0.6
+instability = 0.8
+scale = 2.6
+
+# ---- Harmony -------------------------------------------------------------
+
+# Rule 1: notes starting on strong beats should be chord tones.
+[rules.chord_tones_on_strong_beats]
+weight = 3.0
+breakable = true
+tension = 0.6
+
+# ---- Contour and motion --------------------------------------------------
+
+# Rule 9: share of stepwise intervals (1-2 semitones) should sit in a band.
+[rules.mostly_steps]
+weight = 2.0
+breakable = false
+tension = 0.0
+min_ratio = 0.60
+max_ratio = 0.75
+slope = 3.0            # score falls by slope per unit of deviation outside the band
+
+# Rule 10: a leap larger than a perfect 4th is followed by a step back.
+[rules.gap_fill]
+weight = 2.0
+breakable = true
+tension = 0.4
+leap_threshold = 5     # semitones; leaps strictly larger need filling
+
+# Rule 15: total range. Soft limit octave+3rd, hard cap octave+5th.
+[rules.range]
+weight = 1.5
+breakable = false
+tension = 0.0
+soft_max = 16          # semitones
+hard_max = 19          # beyond this the candidate is discarded
+
+# ---- Rhythm --------------------------------------------------------------
+
+# Rule 22: long notes on strong beats; the phrase-final note is long.
+[rules.long_notes_on_strong_beats]
+weight = 1.5
+breakable = true
+tension = 0.3
+min_final_dur = 8      # grid steps (16ths); 8 = half note
+final_share = 0.5      # how much of the score the final-note check gets
+
+# ---- Form ----------------------------------------------------------------
+
+# Rule 30: final note is the tonic (or the 3rd) on a strong beat.
+[rules.final_note]
+weight = 4.0
+breakable = false
+tension = 0.0
+third_score = 0.5      # score for ending on the 3rd instead of the tonic
+weak_beat_penalty = 0.5
+
+# ---- Contour (M4) --------------------------------------------------------
+
+# Rule 14: the highest note appears once, 60-75 % into the melody.
+[rules.single_climax]
+weight = 3.0
+breakable = false
+tension = 0.0
+min_pos = 0.55
+max_pos = 0.80
+multi_penalty = 0.5    # per extra occurrence of the highest note
+min_height = 7         # semitones between lowest and highest note
+
+# Rule 19: rise and fall balance; the ending descends.
+[rules.balanced_direction]
+weight = 1.5
+breakable = false
+tension = 0.0
+descent_share = 0.4
+tail_notes = 3
+
+# ---- Form (M4) -----------------------------------------------------------
+
+# Rule 27: Repeat bars resemble their source; exact repeats only once.
+[rules.repetition_with_variation]
+weight = 3.0
+breakable = false
+tension = 0.0
+min_similarity = 0.6
+exact_first = 0.6
+exact_again = -1.0
+
+# Rule 28: Fragment bars sequence the previous bar.
+[rules.sequence]
+weight = 1.5
+breakable = false
+tension = 0.0
+partial_credit = 0.5
+
+# Rule 29: antecedent ends open (2, 5, 7), consequent ends on 1.
+[rules.question_answer]
+weight = 2.5
+breakable = false
+tension = 0.0
+closed_antecedent_penalty = 0.5
+
+# Rule 31: the opening motif returns near the end.
+[rules.callback]
+weight = 2.0
+breakable = false
+tension = 0.0
+min_similarity = 0.6
+
+# ---- Harmony (M5) --------------------------------------------------------
+
+# Rule 2: non-chord tones scored by type.
+[rules.nct_types]
+weight = 2.0
+breakable = true
+tension = 0.5
+passing = 0.6
+neighbor = 0.6
+appoggiatura = 0.4
+suspension = 0.4
+anticipation = 0.2
+escape = 0.1
+unclassified = -1.0
+tension_bonus = 0.8    # added to appoggiatura/suspension scaled by (target-0.5)*2
+
+# Rule 3: avoid notes (4th over major on a strong beat, b9 over dominant).
+[rules.avoid_notes]
+weight = 1.5
+breakable = true
+tension = 0.6
+min_dur = 4            # steps; shorter 4ths are passing material
+
+# Rule 4: diatonic by default; chromatic notes resolve by half step.
+[rules.diatonic]
+weight = 2.0
+breakable = true
+tension = 0.7
+resolved_score = 0.5
+
+# Rule 5: leading tone resolves up; strict at cadences.
+[rules.leading_tone]
+weight = 2.0
+breakable = true
+tension = 0.5
+soft_penalty = 0.4
+
+# Rule 6: chordal 7th resolves down by step at a chord change.
+[rules.seventh_resolves]
+weight = 1.5
+breakable = true
+tension = 0.4
+
+# Rule 7: guide tones (3rd or 7th) on the first strong beat of a new chord.
+[rules.guide_tones]
+weight = 1.0
+breakable = false
+tension = 0.0
+other_chord_tone = 0.6
+
+# Rule 8: common tone or step across a chord change.
+[rules.smooth_changes]
+weight = 1.5
+breakable = true
+tension = 0.4
+max_leap = 7           # semitones tolerated without penalty (score 0)
+
+# ---- Contour (M5) --------------------------------------------------------
+
+# Rule 11: at most N consecutive leaps in one direction unless arpeggiated.
+[rules.consecutive_leaps]
+weight = 1.5
+breakable = true
+tension = 0.4
+max_run = 2
+
+# Rule 12: tritone and augmented-2nd leaps.
+[rules.awkward_intervals]
+weight = 2.0
+breakable = true
+tension = 0.8
+
+# Rule 13: leaps larger than a 6th penalized; larger than an octave discarded.
+[rules.max_leap]
+weight = 2.0
+breakable = true
+tension = 0.6
+soft_max = 9
+hard_max = 12
+
+# Rule 16: no long monotone.
+[rules.monotone]
+weight = 1.5
+breakable = false
+tension = 0.0
+max_repeats = 3
+
+# Rule 17: no noodling between two pitches.
+[rules.noodling]
+weight = 1.5
+breakable = false
+tension = 0.0
+max_alternations = 4
+
+# Rule 18: no endless runs in one direction.
+[rules.runs]
+weight = 1.5
+breakable = false
+tension = 0.0
+max_notes = 6
+
+# ---- Rhythm (M5) ---------------------------------------------------------
+
+# Rule 20: the opening rhythm returns in a good share of bars.
+[rules.rhythmic_motif]
+weight = 2.0
+breakable = false
+tension = 0.0
+min_share = 0.3
+max_share = 0.8
+
+# Rule 21: more than one duration per phrase.
+[rules.rhythmic_variety]
+weight = 1.0
+breakable = false
+tension = 0.0
+min_distinct = 2
+
+# Rule 23: syncopation penalized below the threshold target, rewarded above.
+[rules.syncopation]
+weight = 1.5
+breakable = true
+tension = 0.5
+threshold = 0.6
+
+# Rule 24: breathe at the end of every phrase.
+[rules.breathing]
+weight = 3.0
+breakable = false
+tension = 0.0
+min_dur = 8
+sub_min_dur = 4        # 2-bar sub-phrases end with at least a quarter
+
+# Rule 25: note density follows the tension curve.
+[rules.density]
+weight = 2.0
+breakable = false
+tension = 0.0
+
+# ---- Expectation and feel (M5) ------------------------------------------
+
+# Rule 32: surprise budget. p0..p12 = probability of an interval of that
+# many semitones (either direction). min/max_bits bound the mean surprise.
+[rules.surprise]
+weight = 2.0
+breakable = false
+tension = 0.0
+p0 = 0.18
+p1 = 0.10
+p2 = 0.24
+p3 = 0.11
+p4 = 0.10
+p5 = 0.09
+p6 = 0.01
+p7 = 0.08
+p8 = 0.03
+p9 = 0.04
+p10 = 0.01
+p11 = 0.01
+p12 = 0.04
+ngram_discount = 0.4
+min_bits = 2.6
+max_bits = 3.6
+slope = 3.0
+
+# Rule 33: delayed resolution in high-tension bars.
+[rules.delayed_resolution]
+weight = 1.5
+breakable = false
+tension = 0.0
+high_threshold = 0.7
+
+# Rule 34: resolve to a stable degree within N bars after the tension peak.
+[rules.resolve_after_peak]
+weight = 2.0
+breakable = false
+tension = 0.0
+window_bars = 2
+
+# Rule 35: the bar after the peak carries the strongest arrival.
+[rules.arrival]
+weight = 2.0
+breakable = false
+tension = 0.0
+min_dur = 4
+
+# ---- Phrasing ------------------------------------------------------------
+
+# Rule 36: every phrase is an arch: not starting on its peak, ending lower.
+[rules.phrase_arch]
+weight = 3.0
+breakable = false
+tension = 0.0
+min_drop = 3           # semitones from the phrase peak to its last note

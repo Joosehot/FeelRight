@@ -1,0 +1,45 @@
+# Orchestral piece in three sections: A B C.
+# A: bright D major, violins carry the theme.
+# B: B minor, slower, oboe sings a contrasting idea.
+# C: back to D major, faster, horn and strings drive to the final cadence.
+
+name = "Orkesterikappale ABC"
+
+[[section]]
+name = "A"
+chords = "D A Bm G | D A G A | Bm F#m G D | G D A D"
+key = "D:major"
+tempo = 126
+bars = 16
+seed = 8
+instrument = "violin"
+octave = 1
+style = "orchestral"
+form = "aaba"
+tension = [0.2, 0.3, 0.4, 0.5, 0.4, 0.5, 0.6, 0.7, 0.5, 0.6, 0.8, 0.9, 0.7, 0.5, 0.4, 0.2]
+
+[[section]]
+name = "B"
+chords = "Bm Em F#7 Bm | G Em F#7 Bm"
+key = "B:minor"
+tempo = 88
+bars = 8
+seed = 3
+instrument = "oboe"
+octave = 0
+style = "orchestral"
+form = "period"
+tension = [0.3, 0.4, 0.5, 0.6, 0.5, 0.7, 0.9, 0.3]
+
+[[section]]
+name = "C"
+chords = "D G A D | Bm G A A | D G Em A | G A D D"
+key = "D:major"
+tempo = 144
+bars = 16
+seed = 5
+instrument = "horn"
+octave = 0
+style = "orchestral"
+form = "sentence"
+tension = [0.3, 0.4, 0.5, 0.6, 0.5, 0.6, 0.7, 0.8, 0.6, 0.7, 0.9, 1.0, 0.8, 0.6, 0.4, 0.1]

@@ -1,0 +1,72 @@
+wrote examples/out/viulu.mid (D:major, 16 bars, 58 notes, seed 8, Classical, Beam, Aaba) score 57.01
+Bar 1  target 0.20  observed 0.39
+  - D on the change to D is not a guide tone     -0.4
+Bar 2  target 0.30  observed 0.55
+  - E on the change to A is not a guide tone     -0.4
+Bar 3  target 0.40  observed 0.40
+Bar 4  target 0.50  observed 0.63
+  - phrase ends without a breath                 -3.0
+  - G on the change to G is not a guide tone     -0.4
+Bar 5  target 0.40  observed 0.63
+  - bar 5 does not sequence bar 4                -0.8
+Bar 6  target 0.50  observed 0.63
+  - E on the change to A is not a guide tone     -0.4
+Bar 7  target 0.60  observed 0.49
+  - D on the change to G is not a guide tone     -0.4
+Bar 8  target 0.70  observed 0.64
+  - E on the change to A is not a guide tone     -0.4
+Bar 9  target 0.50  observed 0.72
+  - F# on the change to Bm is not a guide tone   -0.4
+Bar 10 target 0.60  observed 0.64
+  - F# on the change to F#m is not a guide tone  -0.4
+Bar 11 target 0.80  observed 0.72
+  + syncopation                                  +0.8  [tension]
+  - unclassified non-chord tone F# over G        -2.0  (allowed, tension high)
+  - D on the change to G is not a guide tone     -0.4
+Bar 12 target 1.00  observed 0.83
+  - unclassified non-chord tone G over D         -2.0  (allowed, tension high)
+  - bar 12 should vary bar 4                     -0.8
+  - A on the change to D is not a guide tone     -0.4
+Bar 13 target 0.80  observed 0.81
+  - G on the change to G is not a guide tone     -0.4
+Bar 14 target 0.60  observed 0.55
+Bar 15 target 0.40  observed 0.60
+  - E on the change to A is not a guide tone     -0.4
+Bar 16 target 0.20  observed 0.11
+  - D on the change to D is not a guide tone     -0.4
+Tension term -2.02 (lambda 6)
+Rules:
+  chord_tones_on_strong_beats  +3.00 (score +1.00 x weight 3.0)
+  nct_types                    +1.62 (score +0.33 x weight 2.0) broken forgiven +0.97
+  avoid_notes                  +1.50 (score +1.00 x weight 1.5)
+  diatonic                     +2.00 (score +1.00 x weight 2.0)
+  leading_tone                 +2.00 (score +1.00 x weight 2.0)
+  guide_tones                  +0.35 (score +0.35 x weight 1.0)
+  smooth_changes               +1.40 (score +0.93 x weight 1.5)
+  mostly_steps                 +1.98 (score +0.99 x weight 2.0) broken
+  gap_fill                     +2.00 (score +1.00 x weight 2.0)
+  consecutive_leaps            +1.50 (score +1.00 x weight 1.5)
+  awkward_intervals            +2.00 (score +1.00 x weight 2.0)
+  max_leap                     +2.00 (score +1.00 x weight 2.0)
+  single_climax                +3.00 (score +1.00 x weight 3.0)
+  range                        +1.50 (score +1.00 x weight 1.5)
+  monotone                     +1.50 (score +1.00 x weight 1.5)
+  noodling                     +1.50 (score +1.00 x weight 1.5)
+  runs                         +1.50 (score +1.00 x weight 1.5)
+  balanced_direction           +1.50 (score +1.00 x weight 1.5)
+  rhythmic_motif               +2.00 (score +1.00 x weight 2.0)
+  rhythmic_variety             +1.00 (score +1.00 x weight 1.0)
+  long_notes_on_strong_beats   +1.13 (score +0.76 x weight 1.5)
+  syncopation                  +0.75 (score +0.50 x weight 1.5)
+  breathing                    +2.25 (score +0.75 x weight 3.0) broken
+  density                      +0.93 (score +0.47 x weight 2.0)
+  repetition_with_variation    +2.39 (score +0.80 x weight 3.0) broken
+  question_answer              +2.50 (score +1.00 x weight 2.5)
+  final_note                   +4.00 (score +1.00 x weight 4.0)
+  callback                     +2.00 (score +1.00 x weight 2.0)
+  surprise                     +1.98 (score +0.99 x weight 2.0)
+  delayed_resolution           -0.75 (score -0.50 x weight 1.5)
+  resolve_after_peak           +2.00 (score +1.00 x weight 2.0)
+  arrival                      +2.00 (score +1.00 x weight 2.0)
+  phrase_arch                  +3.00 (score +1.00 x weight 3.0)
+Total 57.01

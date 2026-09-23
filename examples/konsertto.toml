@@ -1,0 +1,46 @@
+# Piano-concerto piece in the spirit of Tchaikovsky's first: a maestoso
+# opening theme in D-flat major in 3/4 with horns over the piano's
+# chords, a piano solo in B-flat minor, and the theme's grand return.
+
+name = "Pianokonsertto ABC"
+
+[[section]]
+name = "A maestoso"
+chords = "Db Ab Bbm Gb | Db Ab Gb Ab | Bbm Fm Gb Db | Gb Db Ab Db"
+key = "Db:major"
+meter = "3/4"
+tempo = 96
+bars = 16
+seed = 12
+instrument = "horn"
+octave = 0
+style = "concerto"
+form = "aaba"
+tension = [0.4, 0.5, 0.5, 0.6, 0.5, 0.6, 0.7, 0.8, 0.6, 0.7, 0.9, 1.0, 0.8, 0.7, 0.5, 0.3]
+
+[[section]]
+name = "B piano solo"
+chords = "Bbm Gb F7 Bbm | Ebm Bbm F7 Bbm | Gb Db Ebm F7 | Bbm Gb F7 Bbm"
+key = "Bb:minor"
+tempo = 138
+bars = 16
+seed = 5
+instrument = "piano"
+octave = 1
+style = "classical"
+form = "sentence"
+tension = [0.2, 0.3, 0.4, 0.5, 0.3, 0.4, 0.5, 0.6, 0.5, 0.6, 0.7, 0.9, 0.7, 0.5, 0.4, 0.2]
+
+[[section]]
+name = "C return"
+chords = "Db Ab Bbm Gb | Db Ab Gb Ab | Bbm Fm Gb Db | Gb Ab Db Db"
+key = "Db:major"
+meter = "3/4"
+tempo = 104
+bars = 16
+seed = 12
+instrument = "strings"
+octave = 1
+style = "concerto"
+form = "aaba"
+tension = [0.5, 0.6, 0.6, 0.7, 0.6, 0.7, 0.8, 0.8, 0.7, 0.8, 0.9, 1.0, 0.9, 0.7, 0.4, 0.1]

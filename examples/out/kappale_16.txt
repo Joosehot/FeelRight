@@ -1,0 +1,69 @@
+wrote examples/out/kappale_16.mid (A:minor, 16 bars, 45 notes, seed 7, Classical, Beam, Aaba) score 55.94
+Bar 1  target 0.10  observed 0.39
+  - A on the change to Am is not a guide tone    -0.4
+Bar 2  target 0.20  observed 0.68
+  - D on the change to Dm is not a guide tone    -0.4
+Bar 3  target 0.30  observed 0.37
+  - E on the change to E7 is not a guide tone    -0.4
+Bar 4  target 0.40  observed 0.31
+Bar 5  target 0.30  observed 0.59
+  - bar 5 does not sequence bar 4                -0.8
+  - F on the change to F is not a guide tone     -0.4
+Bar 6  target 0.40  observed 0.47
+  - A on the change to Dm is not a guide tone    -0.4
+Bar 7  target 0.50  observed 0.67
+Bar 8  target 0.60  observed 0.34
+  - A on the change to Am is not a guide tone    -0.4
+Bar 9  target 0.50  observed 0.45
+Bar 10 target 0.60  observed 0.62
+  - D on the change to G is not a guide tone     -0.4
+Bar 11 target 0.80  observed 0.83
+  - unclassified non-chord tone B over Am        -2.0  (allowed, tension high)
+  - A on the change to Am is not a guide tone    -0.4
+Bar 12 target 1.00  observed 0.91
+  - leap of 8 semitones across the chord change  -1.5  (allowed, tension high)
+  - bar 12 should vary bar 4                     -0.5
+Bar 13 target 0.70  observed 0.72
+Bar 14 target 0.50  observed 0.52
+  - A on the change to Dm is not a guide tone    -0.4
+Bar 15 target 0.30  observed 0.46
+  - bar 15 should vary bar 7                     -0.5
+  - E on the change to E7 is not a guide tone    -0.4
+Bar 16 target 0.10  observed 0.23
+  - A on the change to Am is not a guide tone    -0.4
+Tension term -3.44 (lambda 6)
+Rules:
+  chord_tones_on_strong_beats  +3.00 (score +1.00 x weight 3.0)
+  nct_types                    +1.58 (score +0.42 x weight 2.0) broken forgiven +0.74
+  avoid_notes                  +1.50 (score +1.00 x weight 1.5)
+  diatonic                     +2.00 (score +1.00 x weight 2.0)
+  leading_tone                 +2.00 (score +1.00 x weight 2.0)
+  seventh_resolves             +1.50 (score +1.00 x weight 1.5)
+  guide_tones                  +0.45 (score +0.45 x weight 1.0)
+  smooth_changes               +1.42 (score +0.73 x weight 1.5) broken forgiven +0.32
+  mostly_steps                 +1.95 (score +0.97 x weight 2.0) broken
+  gap_fill                     +2.00 (score +1.00 x weight 2.0)
+  consecutive_leaps            +1.50 (score +1.00 x weight 1.5)
+  awkward_intervals            +2.00 (score +1.00 x weight 2.0)
+  max_leap                     +2.00 (score +1.00 x weight 2.0)
+  single_climax                +3.00 (score +1.00 x weight 3.0)
+  range                        +1.50 (score +1.00 x weight 1.5)
+  monotone                     +1.50 (score +1.00 x weight 1.5)
+  noodling                     +1.50 (score +1.00 x weight 1.5)
+  runs                         +1.50 (score +1.00 x weight 1.5)
+  balanced_direction           +0.90 (score +0.60 x weight 1.5)
+  rhythmic_motif               +2.00 (score +1.00 x weight 2.0)
+  rhythmic_variety             +1.00 (score +1.00 x weight 1.0)
+  long_notes_on_strong_beats   +1.33 (score +0.88 x weight 1.5)
+  breathing                    +3.00 (score +1.00 x weight 3.0)
+  density                      +0.55 (score +0.28 x weight 2.0)
+  repetition_with_variation    +1.96 (score +0.65 x weight 3.0) broken
+  question_answer              +2.50 (score +1.00 x weight 2.5)
+  final_note                   +4.00 (score +1.00 x weight 4.0)
+  callback                     +2.00 (score +1.00 x weight 2.0)
+  surprise                     +2.00 (score +1.00 x weight 2.0)
+  delayed_resolution           -0.75 (score -0.50 x weight 1.5)
+  resolve_after_peak           +2.00 (score +1.00 x weight 2.0)
+  arrival                      +2.00 (score +1.00 x weight 2.0)
+  phrase_arch                  +3.00 (score +1.00 x weight 3.0)
+Total 55.94

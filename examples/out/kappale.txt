@@ -1,0 +1,53 @@
+wrote examples/out/kappale.mid (A:minor, 8 bars, 21 notes, seed 42, Classical, Beam, Sentence) score 55.94
+Bar 1  target 0.15  observed 0.38
+Bar 2  target 0.30  observed 0.50
+  - A on the change to Dm is not a guide tone    -0.4
+Bar 3  target 0.46  observed 0.65
+  - E on the change to E7 is not a guide tone    -0.4
+Bar 4  target 0.61  observed 0.67
+  - phrase ends without a breath                 -3.0
+Bar 5  target 0.76  observed 0.52
+  - bar 5 does not sequence bar 4                -0.8
+Bar 6  target 0.86  observed 0.65
+  - bar 6 does not sequence bar 5                -0.8
+Bar 7  target 0.51  observed 0.58
+  - E on the change to E7 is not a guide tone    -0.4
+Bar 8  target 0.15  observed 0.20
+  - A on the change to Am is not a guide tone    -0.4
+Tension term -1.48 (lambda 6)
+Rules:
+  chord_tones_on_strong_beats  +3.00 (score +1.00 x weight 3.0)
+  nct_types                    +1.20 (score +0.60 x weight 2.0)
+  avoid_notes                  +1.50 (score +1.00 x weight 1.5)
+  diatonic                     +2.00 (score +1.00 x weight 2.0)
+  leading_tone                 +2.00 (score +1.00 x weight 2.0)
+  seventh_resolves             +1.50 (score +1.00 x weight 1.5)
+  guide_tones                  +0.60 (score +0.60 x weight 1.0)
+  smooth_changes               +1.29 (score +0.86 x weight 1.5)
+  mostly_steps                 +0.80 (score +0.40 x weight 2.0) broken
+  gap_fill                     +2.00 (score +1.00 x weight 2.0)
+  consecutive_leaps            +1.50 (score +1.00 x weight 1.5)
+  awkward_intervals            +2.00 (score +1.00 x weight 2.0)
+  max_leap                     +2.00 (score +1.00 x weight 2.0)
+  single_climax                +3.00 (score +1.00 x weight 3.0)
+  range                        +1.50 (score +1.00 x weight 1.5)
+  monotone                     +1.50 (score +1.00 x weight 1.5)
+  noodling                     +1.50 (score +1.00 x weight 1.5)
+  runs                         +1.50 (score +1.00 x weight 1.5)
+  balanced_direction           +1.40 (score +0.93 x weight 1.5)
+  rhythmic_motif               +2.00 (score +1.00 x weight 2.0)
+  rhythmic_variety             +1.00 (score +1.00 x weight 1.0)
+  long_notes_on_strong_beats   +1.50 (score +1.00 x weight 1.5)
+  breathing                    +1.50 (score +0.50 x weight 3.0) broken
+  density                      +0.64 (score +0.32 x weight 2.0)
+  repetition_with_variation    +3.00 (score +1.00 x weight 3.0)
+  sequence                     -0.75 (score -0.50 x weight 1.5)
+  question_answer              +2.50 (score +1.00 x weight 2.5)
+  final_note                   +4.00 (score +1.00 x weight 4.0)
+  callback                     +2.00 (score +1.00 x weight 2.0)
+  surprise                     +2.00 (score +1.00 x weight 2.0)
+  delayed_resolution           -0.75 (score -0.50 x weight 1.5)
+  resolve_after_peak           +2.00 (score +1.00 x weight 2.0)
+  arrival                      +2.00 (score +1.00 x weight 2.0)
+  phrase_arch                  +3.00 (score +1.00 x weight 3.0)
+Total 55.94

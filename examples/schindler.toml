@@ -1,0 +1,43 @@
+# Solo violin elegy in the spirit of the Schindler's List theme:
+# D minor, slow, singing lines high on the violin, strings underneath.
+
+name = "Elegia viululle"
+
+[[section]]
+name = "A theme"
+chords = "Dm Gm A7 Dm | Bb Gm A7 Dm | Dm Gm C F | Bb Gm A7 Dm"
+key = "D:minor"
+tempo = 60
+bars = 16
+seed = 17
+instrument = "violin"
+octave = 1
+style = "orchestral"
+form = "period"
+tension = [0.2, 0.3, 0.4, 0.4, 0.3, 0.4, 0.6, 0.5, 0.4, 0.5, 0.7, 0.9, 0.7, 0.5, 0.3, 0.2]
+
+[[section]]
+name = "B consolation"
+chords = "F C Dm Bb | F C Bb C | Dm Bb F C | Bb F Gm A7"
+key = "F:major"
+tempo = 64
+bars = 16
+seed = 9
+instrument = "violin"
+octave = 1
+style = "orchestral"
+form = "sentence"
+tension = [0.3, 0.4, 0.5, 0.5, 0.4, 0.5, 0.6, 0.7, 0.6, 0.7, 0.9, 1.0, 0.8, 0.6, 0.5, 0.6]
+
+[[section]]
+name = "C return"
+chords = "Dm Gm A7 Dm | Bb Gm A7 Dm | Dm Gm C F | Gm A7 Dm Dm"
+key = "D:minor"
+tempo = 56
+bars = 16
+seed = 17
+instrument = "violin"
+octave = 1
+style = "orchestral"
+form = "period"
+tension = [0.3, 0.4, 0.5, 0.5, 0.4, 0.5, 0.7, 0.6, 0.5, 0.6, 0.8, 0.9, 0.6, 0.4, 0.2, 0.1]

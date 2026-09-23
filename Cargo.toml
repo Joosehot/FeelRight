@@ -1,0 +1,18 @@
+[package]
+name = "melody"
+version = "0.1.0"
+edition = "2021"
+description = "Deterministic melody engine: hand-crafted evaluation + beam search"
+
+[[bin]]
+name = "melody"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+midly = "0.5"
+rand = "0.8"
+rand_chacha = "0.3"
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
