@@ -1,0 +1,15 @@
+name = "Happy Birthday"
+[[section]]
+name = "theme"
+chords = "F | F | C | C | F | F | Bb | F C | F"
+key = "F:major"
+meter = "3/4"
+tempo = 116
+bars = 9
+instrument = "piano"
+style = "classical"
+form = "period"
+melody = """
+r:8 C4:3 C4:1 | D4:4 C4:4 F4:4 | E4:8 C4:3 C4:1 | D4:4 C4:4 G4:4 |
+F4:8 C4:3 C4:1 | C5:4 A4:4 F4:4 | E4:4 D4:4 Bb4:3 Bb4:1 | A4:4 F4:4 G4:4 | F4:8 r:4
+"""

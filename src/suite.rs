@@ -65,6 +65,10 @@ pub struct SuiteSection {
     /// Per-section rule overrides, e.g. `max_leap = { soft_max = 12 }`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rules_override: Option<toml::Table>,
+    /// Refinement rounds after the search: each round rewrites one bar
+    /// and keeps it only if the score improves. 0 = off.
+    #[serde(default)]
+    pub refine: u32,
 }
 
 fn default_meter() -> String {
@@ -114,6 +118,9 @@ pub fn gm_program(name: &str) -> Result<u8> {
         "oboe" => 68,
         "clarinet" => 71,
         "flute" => 73,
+        "voice" | "choir" | "tenor" => 52,
+        "oohs" => 53,
+        "mandolin" => 25,
         _ => n.parse::<u8>().map_err(|_| anyhow::anyhow!("unknown instrument '{name}'"))?,
     })
 }
@@ -130,6 +137,7 @@ pub struct Rendered {
     pub octave: i32,
     pub phrase_ends: Vec<u32>,
     pub eval: Evaluation,
+    pub refine_log: Vec<search::RefineStep>,
 }
 
 /// What a section needs from its neighbours.
@@ -216,6 +224,11 @@ pub fn render_section(sec: &SuiteSection, nb: &Neighbours, base_cfg: &Config, ru
         }
         None => search::beam_search(&input, cfg, rules),
     };
+    let (melody, eval, refine_log) = if sec.refine > 0 && sec.melody.is_none() {
+        search::refine(&input, cfg, rules, melody, sec.refine, (sec.refine / 3).max(5))
+    } else {
+        (melody, eval, vec![])
+    };
     Ok(Rendered {
         key,
         melody,
@@ -228,6 +241,7 @@ pub fn render_section(sec: &SuiteSection, nb: &Neighbours, base_cfg: &Config, ru
         octave: sec.octave,
         phrase_ends: form.phrase_ends(),
         eval,
+        refine_log,
     })
 }
 
@@ -301,26 +315,50 @@ pub fn explore(file: &SuiteFile, seeds: u64, cfg: &Config, rules: &[Box<dyn Rule
             }
             continue;
         }
-        let mut best: Option<(u64, f32, Rendered)> = None;
-        let mut tried = Vec::new();
-        for s in 0..seeds {
-            let seed = sec.seed + s;
-            let mut trial = sec.clone();
-            trial.seed = seed;
-            let r = render_section(&trial, &nb, cfg, rules)?;
-            tried.push((seed, r.eval.total));
-            if best.as_ref().map(|b| r.eval.total > b.1).unwrap_or(true) {
-                best = Some((seed, r.eval.total, r));
+        // Render every seed in parallel; the search is deterministic per
+        // seed, so the result does not depend on scheduling.
+        let threads = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4).max(1);
+        let seed_list: Vec<u64> = (0..seeds).map(|s| sec.seed + s).collect();
+        let mut results: Vec<(u64, Result<Rendered>)> = Vec::with_capacity(seed_list.len());
+        std::thread::scope(|scope| {
+            let mut handles = Vec::new();
+            for chunk in seed_list.chunks(seed_list.len().div_ceil(threads).max(1)) {
+                let chunk = chunk.to_vec();
+                let nb = &nb;
+                handles.push(scope.spawn(move || {
+                    chunk
+                        .into_iter()
+                        .map(|seed| {
+                            let mut trial = sec.clone();
+                            trial.seed = seed;
+                            (seed, render_section(&trial, nb, cfg, rules))
+                        })
+                        .collect::<Vec<_>>()
+                }));
             }
+            for h in handles {
+                results.extend(h.join().expect("seed worker panicked"));
+            }
+        });
+        let mut scored: Vec<(u64, Rendered)> = Vec::new();
+        for (seed, r) in results {
+            scored.push((seed, r?));
         }
-        if let Some((seed, score, r)) = best {
+        scored.sort_by(|a, b| b.1.eval.total.partial_cmp(&a.1.eval.total).unwrap());
+        if let Some((seed, r)) = scored.first() {
+            let (seed, score) = (*seed, r.eval.total);
             if let Some(t) = Theme::from_melody(&r.key, &r.melody, r.meter) {
                 themes.insert(sec.name.clone(), t);
             }
             best_file.section[i].seed = seed;
             let label = if sec.name.is_empty() { format!("{}", i + 1) } else { sec.name.clone() };
-            let worst = tried.iter().map(|t| t.1).fold(f32::INFINITY, f32::min);
-            log.push(format!("section {label}: best seed {seed} score {score:.2} (worst {worst:.2})"));
+            let worst = scored.last().map(|s| s.1.eval.total).unwrap_or(score);
+            let top: Vec<String> = scored.iter().take(3).map(|(s, r)| format!("{s}={:.1}", r.eval.total)).collect();
+            log.push(format!(
+                "section {label}: {} seeds, best seed {seed} score {score:.2} (worst {worst:.2}; top {})",
+                scored.len(),
+                top.join(", ")
+            ));
         }
     }
     Ok((best_file, log))

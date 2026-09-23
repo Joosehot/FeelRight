@@ -1,0 +1,54 @@
+# Brass piece in the spirit of Dvorak: a chorale-like horn theme in G major
+# (the "B valo" recipe from the nocturne: sentence form, stepwise, density
+# follows tension), a Bohemian dance-like trumpet section in E minor, and
+# the full brass section bringing the theme back.
+
+name = "Uusi maailma, vasket"
+
+[[section]]
+name = "A koraali"
+chords = "G D Em C | G D C D | Em C G D | C D B7 B7"
+key = "G:major"
+tempo = 92
+bars = 16
+seed = 38
+instrument = "horn"
+octave = 0
+style = "brass"
+form = "sentence"
+tension = [0.2, 0.3, 0.3, 0.4, 0.3, 0.4, 0.5, 0.6, 0.5, 0.6, 0.8, 0.9, 0.7, 0.6, 0.6, 0.7]
+ends_open = true
+bridge = 1
+rules_override = { mostly_steps = { min_ratio = 0.5 }, density = { weight = 3.0 } }
+
+[[section]]
+name = "B tanssi"
+chords = "Em B7 Em G | Am Em B7 Em | Em D G B7 | Am B7 Em B7"
+key = "E:minor"
+tempo = 120
+bars = 16
+seed = 5
+instrument = "trumpet"
+octave = 0
+style = "brass"
+form = "period"
+tension = [0.5, 0.6, 0.6, 0.7, 0.6, 0.7, 0.8, 0.8, 0.6, 0.7, 0.9, 1.0, 0.8, 0.7, 0.6, 0.7]
+ends_open = true
+bridge = 1
+theme_from = "A koraali"
+rules_override = { syncopation = { threshold = 0.5 }, density = { weight = 3.0 } }
+
+[[section]]
+name = "C koraali tutti"
+chords = "G D Em C | G D C D | Em C G D | C D G G"
+key = "G:major"
+tempo = 88
+bars = 16
+seed = 38
+instrument = "brass"
+octave = 0
+style = "brass"
+form = "sentence"
+tension = [0.6, 0.7, 0.7, 0.8, 0.7, 0.8, 0.9, 0.9, 0.7, 0.8, 1.0, 1.0, 0.8, 0.6, 0.3, 0.1]
+theme_from = "A koraali"
+rules_override = { mostly_steps = { min_ratio = 0.5 }, density = { weight = 3.0 } }

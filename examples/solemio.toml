@@ -1,0 +1,49 @@
+# Neapolitan song in the spirit of 'O sole mio: a calm verse in G major,
+# a soaring chorus with wide leaps, and the chorus again, bigger.
+
+name = "Aurinkolaulu"
+
+[[section]]
+name = "A säkeistö"
+chords = "G D7 G G | C G D7 G | G D7 G Em | Am D7 G D7"
+key = "G:major"
+tempo = 80
+bars = 16
+seed = 12
+instrument = "voice"
+octave = 0
+style = "classical"
+form = "period"
+tension = [0.2, 0.3, 0.3, 0.4, 0.3, 0.4, 0.5, 0.4, 0.3, 0.4, 0.6, 0.7, 0.5, 0.4, 0.5, 0.6]
+ends_open = true
+
+[[section]]
+name = "B kertosäe"
+chords = "C G D7 G | C G D7 G | Am G D7 Em | C D7 G D7"
+key = "G:major"
+tempo = 84
+bars = 16
+seed = 3
+instrument = "voice"
+octave = 0
+style = "orchestral"
+form = "sentence"
+tension = [0.5, 0.6, 0.6, 0.7, 0.6, 0.7, 0.8, 0.7, 0.6, 0.7, 0.9, 1.0, 0.8, 0.6, 0.6, 0.7]
+ends_open = true
+# The chorus leaps: allow octave leaps freely, ask for a tall single climax.
+rules_override = { max_leap = { soft_max = 12 }, mostly_steps = { min_ratio = 0.45 }, single_climax = { weight = 4.0, min_height = 12 }, range = { soft_max = 19 } }
+
+[[section]]
+name = "C kertosäe tutti"
+chords = "C G D7 G | C G D7 G | Am G D7 Em | C D7 G G"
+key = "G:major"
+tempo = 78
+bars = 16
+seed = 3
+instrument = "voice"
+octave = 0
+style = "concerto"
+form = "sentence"
+tension = [0.6, 0.7, 0.7, 0.8, 0.7, 0.8, 0.9, 0.8, 0.7, 0.8, 1.0, 1.0, 0.9, 0.7, 0.4, 0.1]
+theme_from = "B kertosäe"
+rules_override = { max_leap = { soft_max = 12 }, mostly_steps = { min_ratio = 0.45 }, single_climax = { weight = 4.0, min_height = 12 }, range = { soft_max = 19 } }

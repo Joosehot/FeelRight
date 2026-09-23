@@ -1,0 +1,16 @@
+name = "Amazing Grace"
+[[section]]
+name = "theme"
+chords = "F | F | Bb | F | F | F | C | C | F | F | Bb | F | F | C | F | F"
+key = "F:major"
+meter = "3/4"
+tempo = 72
+bars = 16
+instrument = "voice"
+style = "classical"
+form = "period"
+melody = """
+r:8 C4:4 | F4:8 A4:2 F4:2 | A4:8 G4:4 | F4:8 D4:4 | C4:8 C4:4 |
+F4:8 A4:2 F4:2 | A4:8 G4:4 | C5:12 | C5:8 A4:4 |
+C5:6 A4:2 C5:2 A4:2 | F4:8 D4:4 | C4:8 C4:4 | F4:8 A4:2 F4:2 | A4:8 G4:4 | F4:12 | F4:8 r:4
+"""

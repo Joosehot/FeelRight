@@ -133,7 +133,7 @@ impl RuleResult {
     }
 }
 
-pub trait Rule {
+pub trait Rule: Send + Sync {
     /// Key in `rules.toml`.
     fn name(&self) -> &'static str;
     /// Required numeric parameters (besides weight/breakable/tension).

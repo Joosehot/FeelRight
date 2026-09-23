@@ -16,6 +16,7 @@ use crate::motif::Motif;
 use crate::parser::ChordSpan;
 use crate::rules::{evaluate, Context, Evaluation, Rule};
 use crate::theory::{Key, PitchClass};
+use rand::seq::SliceRandom;
 use rand::Rng;
 use rand_chacha::ChaCha8Rng;
 use std::collections::HashSet;
@@ -340,6 +341,155 @@ mod tests {
         for ev in &c {
             assert_eq!(ev[0].start(), 32);
             assert_eq!(ev.iter().map(Event::dur).sum::<u32>(), 16);
+        }
+    }
+}
+
+// ---- iterative refinement ----------------------------------------------
+
+/// One accepted change during refinement.
+#[derive(Clone, Debug)]
+pub struct RefineStep {
+    pub round: u32,
+    pub bar: u32,
+    pub what: &'static str,
+    pub before: f32,
+    pub after: f32,
+}
+
+/// Replace bar `bar` of `melody` with `events` (which must already be
+/// positioned at that bar).
+fn splice_bar(melody: &Melody, meter: Meter, bar: u32, events: Vec<Event>) -> Melody {
+    let spb = meter.steps_per_bar();
+    let (a, b) = (bar * spb, (bar + 1) * spb);
+    let mut out = Melody::default();
+    for e in &melody.events {
+        if e.start() < a {
+            out.push(*e);
+        }
+    }
+    out.events.extend(events);
+    for e in &melody.events {
+        if e.start() >= b {
+            out.push(*e);
+        }
+    }
+    out
+}
+
+/// Hill-climb on a finished melody: each round proposes changes to one
+/// bar (fresh samples, transformations of another bar, or a single
+/// scale-step nudge) and keeps the best proposal only if the full score
+/// improves. Stops after `patience` rounds without improvement or after
+/// `max_rounds`. Deterministic for a given seed.
+pub fn refine(
+    input: &SearchInput,
+    cfg: &Config,
+    rules: &[Box<dyn Rule>],
+    start: Melody,
+    max_rounds: u32,
+    patience: u32,
+) -> (Melody, Evaluation, Vec<RefineStep>) {
+    let mut rng = rng(input.seed.wrapping_mul(7919).wrapping_add(17));
+    let mut current = start;
+    let mut best_eval = score_prefix(input, &current, true, cfg, rules);
+    let mut log = Vec::new();
+    let mut idle = 0;
+    let k = cfg.search.candidates_per_bar.max(4);
+    let max_iv = cfg.search.max_interval;
+    let rhythm = plan_rhythm(&mut rng, input.meter, input.bars, input.style);
+
+    for round in 1..=max_rounds {
+        if idle >= patience {
+            break;
+        }
+        let bar = rng.gen_range(0..input.bars);
+        let prev = current
+            .notes()
+            .filter(|n| n.start < bar * input.meter.steps_per_bar())
+            .last()
+            .map(|n| n.pitch);
+        let mut proposals: Vec<(&'static str, Vec<Event>)> = Vec::new();
+
+        // Fresh material on this bar's current rhythm and on a library rhythm.
+        let cur_rhythm: Vec<u32> = current.bar_events(bar, input.meter).iter().map(Event::dur).collect();
+        for _ in 0..k / 2 {
+            proposals.push(("resampled", sample_bar(&mut rng, input, bar, &cur_rhythm, prev, max_iv)));
+        }
+        for _ in 0..k / 4 {
+            proposals.push(("new rhythm", sample_bar(&mut rng, input, bar, &rhythm[bar as usize], prev, max_iv)));
+        }
+        // Transformations of another bar.
+        if input.bars > 1 {
+            let mut src_bar = rng.gen_range(0..input.bars);
+            if src_bar == bar {
+                src_bar = (bar + 1) % input.bars;
+            }
+            let src = current.bar_events(src_bar, input.meter);
+            for ev in transformed_candidates(input, &src, bar, rng.gen::<bool>()) {
+                proposals.push(("transformed", ev));
+            }
+        }
+        // Nudge one note by a scale step.
+        let mut nudged = current.bar_events(bar, input.meter);
+        let note_slots: Vec<usize> = nudged.iter().enumerate().filter(|(_, e)| e.note().is_some()).map(|(i, _)| i).collect();
+        if let Some(&i) = note_slots.choose(&mut rng) {
+            if let Event::Note(n) = &mut nudged[i] {
+                let idx = crate::motif::scale_index(&input.key, n.pitch);
+                let dir = if rng.gen::<bool>() { 1 } else { -1 };
+                n.pitch = crate::motif::scale_pitch(&input.key, idx + dir).clamp(RANGE_LO, RANGE_HI);
+            }
+            proposals.push(("nudged", nudged));
+        }
+
+        let mut best_local: Option<(&'static str, Melody, Evaluation)> = None;
+        for (what, ev) in proposals {
+            let m = splice_bar(&current, input.meter, bar, ev);
+            let e = score_prefix(input, &m, true, cfg, rules);
+            if e.hard_violation {
+                continue;
+            }
+            if best_local.as_ref().map(|b| e.total > b.2.total).unwrap_or(true) {
+                best_local = Some((what, m, e));
+            }
+        }
+        match best_local {
+            Some((what, m, e)) if e.total > best_eval.total + 1e-3 => {
+                log.push(RefineStep { round, bar, what, before: best_eval.total, after: e.total });
+                current = m;
+                best_eval = e;
+                idle = 0;
+            }
+            _ => idle += 1,
+        }
+    }
+    (current, best_eval, log)
+}
+
+#[cfg(test)]
+mod refine_tests {
+    use super::*;
+    use crate::form::Template;
+    use crate::parser::{parse_key, parse_progression};
+    use crate::rules::all_rules;
+
+    #[test]
+    fn refine_never_lowers_the_score_and_is_deterministic() {
+        let meter = Meter { num: 4, den: 4 };
+        let chords = parse_progression("Am Dm E7 Am | F Dm E7 Am", meter, 8).unwrap();
+        let key = parse_key("A:minor").unwrap();
+        let form = Form::plan(Template::Auto, 8);
+        let cfg = Config::default_config();
+        let rules = all_rules();
+        let input = SearchInput { chords: &chords, key, meter, bars: 8, tension: &[], style: Style::Classical, seed: 5, form: &form, ends_open: false, theme: None };
+        let (m0, e0) = beam_search(&input, &cfg, &rules);
+        let (m1, e1, log) = refine(&input, &cfg, &rules, m0.clone(), 20, 20);
+        let (m2, _, _) = refine(&input, &cfg, &rules, m0, 20, 20);
+        assert!(e1.total >= e0.total);
+        assert_eq!(m1, m2);
+        assert_eq!(m1.total_steps(), 8 * 16);
+        for s in &log {
+            assert!(s.after > s.before);
         }
     }
 }

@@ -173,6 +173,7 @@ pub fn plan(text: &str) -> Plan {
         (&["kitara", "guitar"], "guitar"),
         (&["piano"], "piano"),
         (&["jouset", "strings"], "strings"),
+        (&["laulu", "voice", "tenori", "tenor", "vocal"], "voice"),
     ];
     let mut explicit: Vec<String> = Vec::new();
     for (words, inst) in named {
@@ -386,6 +387,7 @@ pub fn to_suite(plan: &Plan) -> SuiteFile {
             theme_from: if role == 'C' && plan.sections.contains(&'A') { Some("A".into()) } else { None },
             bridge: if last { 0 } else { 1 },
             rules_override: None,
+            refine: 40,
         });
     }
     SuiteFile { name: plan.name.clone(), section: sections }
