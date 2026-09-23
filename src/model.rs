@@ -40,6 +40,9 @@ pub enum Style {
     /// Comic oom-pah: tuba on 1 and 3, chord stabs on 2 and 4, woodblock,
     /// staccato melody.
     Circus,
+    /// Baroque: bass on the strong beats, broken chords in even 8ths
+    /// (guitar or harpsichord), no swells.
+    Baroque,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

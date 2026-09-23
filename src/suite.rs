@@ -120,6 +120,8 @@ pub fn gm_program(name: &str) -> Result<u8> {
         "flute" => 73,
         "voice" | "choir" | "tenor" => 52,
         "bassoon" => 70,
+        "nylon_guitar" | "classical_guitar" => 24,
+        "lute" => 24,
         "piccolo" => 72,
         "xylophone" => 13,
         "pizzicato" => 45,

@@ -230,6 +230,7 @@ const DRUM_HIHAT_PEDAL: u8 = 44;
 const DRUM_WOODBLOCK: u8 = 76;
 const DRUM_LOW_WOODBLOCK: u8 = 77;
 const GM_ACCORDION: u8 = 21;
+const GM_NYLON_GUITAR: u8 = 24;
 const GM_TUBA: u8 = 58;
 const GM_TIMPANI: u8 = 47;
 
@@ -318,6 +319,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
             Style::Rapids => (0, 0, GM_STRINGS),
             Style::Jazz => (GM_EPIANO, GM_ACOUSTIC_BASS, 0),
             Style::Circus => (GM_ACCORDION, GM_TUBA, 0),
+            Style::Baroque => (GM_NYLON_GUITAR, GM_NYLON_GUITAR, 0),
             _ => (0, 0, 0),
         };
         program_change(&mut chd, tick0, CH_CHORDS, chord_prog);
@@ -429,6 +431,38 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
                             t += spbeat;
                         }
                     }
+                }
+                Style::Baroque => {
+                    // Guitar figuration: bass note on each strong beat,
+                    // chord tones climbing in even 8ths (root-5th-3rd-5th
+                    // from a voice-led voicing), no dynamic swell beyond
+                    // a gentle lean into the bar.
+                    let v = voice_lead(span, prev_voicing.as_deref(), 52, 64);
+                    let spbeat = sec.meter.steps_per_beat();
+                    let end = span.start + span.len;
+                    let vel = (46.0 + 22.0 * e).round() as u8;
+                    let (low, mid, high) = match v.len() {
+                        4 => (v[0], v[1], v[3]),
+                        _ => (v[0], v[1], v[2]),
+                    };
+                    let cycle = [low, mid, high, mid, high, mid];
+                    let mut t = span.start;
+                    let mut i = 0;
+                    while t + ALBERTI_STEP <= end {
+                        let lean = if (t - span.start) % spb == 0 { 6 } else { 0 };
+                        note_pair(&mut chd, CH_CHORDS, cycle[i % cycle.len()], vel + lean, off + t, ALBERTI_STEP);
+                        t += ALBERTI_STEP;
+                        i += 1;
+                    }
+                    let mut t = span.start;
+                    while t < end {
+                        if sec.meter.is_strong(t % spb) {
+                            let len = (2 * spbeat).min(end - t);
+                            note_pair(&mut bass, CH_BASS, root.max(40), bvel, off + t, len);
+                        }
+                        t += spbeat;
+                    }
+                    prev_voicing = Some(v);
                 }
                 Style::Circus => {
                     let spbeat = sec.meter.steps_per_beat();
