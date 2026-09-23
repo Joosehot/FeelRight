@@ -1,0 +1,54 @@
+# Cantopop-style birthday song. A generated intro, then the real Happy
+# Birthday melody (public domain) over a pop backing, then the same tune
+# lifted a semitone with flute for the finale.
+
+name = "Sang Yat Fai Lok"
+
+[[section]]
+name = "A intro"
+chords = "F C Dm Bb | F C Bb C"
+key = "F:major"
+meter = "3/4"
+tempo = 116
+bars = 8
+seed = 41
+instrument = "piano"
+octave = 0
+style = "pop"
+form = "period"
+tension = [0.2, 0.3, 0.3, 0.4, 0.3, 0.4, 0.6, 0.7]
+
+[[section]]
+name = "B happy birthday"
+chords = "F | F | C | C | F | F | Bb | F C | F"
+key = "F:major"
+meter = "3/4"
+tempo = 116
+bars = 9
+instrument = "piano"
+octave = 0
+style = "pop"
+form = "period"
+tension = [0.2, 0.3, 0.4, 0.4, 0.5, 0.6, 0.8, 0.6, 0.3]
+melody = """
+r:8 C4:3 C4:1 | D4:4 C4:4 F4:4 | E4:8 C4:3 C4:1 | D4:4 C4:4 G4:4 |
+F4:8 C4:3 C4:1 | C5:4 A4:4 F4:4 | E4:4 D4:4 Bb4:3 Bb4:1 | A4:4 F4:4 G4:4 | F4:8 r:4
+"""
+
+[[section]]
+name = "C happy birthday up a semitone"
+chords = "F# | F# | C# | C# | F# | F# | B | F# C# | F#"
+key = "F#:major"
+meter = "3/4"
+tempo = 120
+bars = 9
+instrument = "flute"
+octave = 1
+style = "pop"
+form = "period"
+tension = [0.4, 0.5, 0.6, 0.6, 0.7, 0.8, 1.0, 0.7, 0.1]
+transpose = 1
+melody = """
+r:8 C4:3 C4:1 | D4:4 C4:4 F4:4 | E4:8 C4:3 C4:1 | D4:4 C4:4 G4:4 |
+F4:8 C4:3 C4:1 | C5:4 A4:4 F4:4 | E4:4 D4:4 Bb4:3 Bb4:1 | A4:4 F4:4 G4:4 | F4:8 r:4
+"""

@@ -1,0 +1,54 @@
+# Piano prelude in the spirit of Heino Kaski's "Pankakoski" op. 48/1:
+# B minor, the rapids in flowing left-hand arpeggios, a broad Romantic
+# melody above, a calmer D major middle, and a return that surges to the
+# climax before the water settles.
+#
+# Run with: melody suite --file examples/pankakoski.toml \
+#   --rules examples/pankakoski_rules.toml --out pankakoski.mid
+
+name = "Preludi h-molli, Koski"
+
+[[section]]
+name = "A koski"
+# i - iv - V7 - i, with VI and III for colour; the rapids never stop.
+chords = "Bm Em F#7 Bm | G D Em F#7 | Bm G Em F#7 | G Em F#7 Bm"
+key = "B:minor"
+tempo = 126
+bars = 16
+seed = 27
+instrument = "piano"
+octave = 1
+style = "rapids"
+form = "aaba"
+# Rise steadily, first peak at bar 12, ease into the middle section.
+tension = [0.3, 0.4, 0.4, 0.5, 0.4, 0.5, 0.6, 0.7, 0.5, 0.6, 0.8, 0.9, 0.7, 0.6, 0.5, 0.4]
+
+[[section]]
+name = "B tyyni"
+# Relative major, slower, the water widens.
+chords = "D A Bm G | D A G A | Bm G D A | G A F#7 F#7"
+key = "D:major"
+tempo = 104
+bars = 16
+seed = 8
+instrument = "piano"
+octave = 1
+style = "classical"
+form = "period"
+# Calm, one swell at bar 12, and an open ending on F#7 back into B minor.
+tension = [0.2, 0.3, 0.3, 0.4, 0.3, 0.4, 0.5, 0.5, 0.4, 0.5, 0.7, 0.8, 0.6, 0.5, 0.6, 0.7]
+
+[[section]]
+name = "C koski palaa"
+# Same theme as A (same seed), faster, one big surge to bar 12, then the
+# rapids die away to a quiet tonic.
+chords = "Bm Em F#7 Bm | G D Em F#7 | Bm G Em F#7 | G F#7 Bm Bm"
+key = "B:minor"
+tempo = 138
+bars = 16
+seed = 27
+instrument = "piano"
+octave = 1
+style = "rapids"
+form = "aaba"
+tension = [0.5, 0.6, 0.6, 0.7, 0.6, 0.7, 0.8, 0.8, 0.7, 0.8, 0.9, 1.0, 0.8, 0.5, 0.3, 0.1]

@@ -1,0 +1,63 @@
+# Nocturne in E minor, four sections. My own pick of what the engine does
+# best: 4/4, moderate tempo, a period theme, a real modulation, and a
+# texture arc from strings to piano to full orchestra to a solo violin.
+
+name = "Nokturno e-molli"
+
+[[section]]
+name = "A teema"
+# Period: the question ends on a half cadence, the answer on the tonic.
+chords = "Em Am B7 Em | C Am B7 Em | Em C G D | Am Em B7 Em"
+key = "E:minor"
+tempo = 84
+bars = 16
+seed = 19
+instrument = "strings"
+octave = 1
+style = "orchestral"
+form = "period"
+tension = [0.2, 0.3, 0.4, 0.5, 0.4, 0.5, 0.6, 0.5, 0.4, 0.5, 0.7, 0.9, 0.7, 0.5, 0.3, 0.2]
+
+[[section]]
+name = "B valo"
+# Relative major, piano alone, lighter and a little faster; ends open on
+# B7 to pull back to E minor.
+chords = "G D Em C | G D C D | Em C G D | C D B7 B7"
+key = "G:major"
+tempo = 96
+bars = 16
+seed = 35
+instrument = "piano"
+octave = 1
+style = "classical"
+form = "sentence"
+tension = [0.2, 0.3, 0.3, 0.4, 0.3, 0.4, 0.5, 0.6, 0.5, 0.6, 0.8, 0.9, 0.7, 0.6, 0.6, 0.7]
+
+[[section]]
+name = "C paluu"
+# The theme again (same seed as A) with the full concerto texture and the
+# highest peak of the piece at bar 12.
+chords = "Em Am B7 Em | C Am B7 Em | Em C G D | Am Em B7 Em"
+key = "E:minor"
+tempo = 88
+bars = 16
+seed = 19
+instrument = "strings"
+octave = 1
+style = "concerto"
+form = "period"
+tension = [0.5, 0.6, 0.6, 0.7, 0.6, 0.7, 0.8, 0.8, 0.7, 0.8, 0.9, 1.0, 0.8, 0.6, 0.4, 0.3]
+
+[[section]]
+name = "D kooda"
+# Solo violin over held strings, almost no tension, ending on the tonic.
+chords = "Am Em B7 Em | C Am B7 Em"
+key = "E:minor"
+tempo = 72
+bars = 8
+seed = 4
+instrument = "violin"
+octave = 1
+style = "orchestral"
+form = "period"
+tension = [0.3, 0.3, 0.4, 0.3, 0.3, 0.4, 0.3, 0.1]

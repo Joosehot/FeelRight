@@ -31,6 +31,9 @@ pub enum Style {
     /// Classical rhythms; oom-pah-pah piano (bass on 1, chords on 2 and
     /// 3), sustained strings. Meant for 3/4.
     Waltz,
+    /// Classical rhythms; flowing 16th-note piano arpeggios over two
+    /// octaves with an octave bass: rapids.
+    Rapids,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

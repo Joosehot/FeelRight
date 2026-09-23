@@ -7,8 +7,10 @@ mod midi;
 mod model;
 mod motif;
 mod parser;
+mod prompt;
 mod rules;
 mod search;
+mod suite;
 mod tension;
 mod theory;
 
@@ -29,6 +31,27 @@ enum Cmd {
     Generate(GenerateArgs),
     /// Generate a multi-section piece described by a TOML file.
     Suite(SuiteArgs),
+    /// Translate a short text description into a suite, search seeds with
+    /// the evaluator, and render the best result.
+    Prompt(PromptArgs),
+}
+
+#[derive(clap::Args)]
+struct PromptArgs {
+    /// Description, e.g. "mahtipontinen orkesterikappale d-molli ABC viulu"
+    text: String,
+    /// Output MIDI path
+    #[arg(long, default_value = "prompt.mid")]
+    out: PathBuf,
+    /// Seeds to try per section (evaluator picks the best)
+    #[arg(long, default_value_t = 6)]
+    seeds: u64,
+    /// Path to rules.toml
+    #[arg(long)]
+    rules: Option<PathBuf>,
+    /// Also write the chosen suite as TOML next to the MIDI
+    #[arg(long)]
+    save_suite: bool,
 }
 
 #[derive(clap::Args)]
@@ -45,54 +68,11 @@ struct SuiteArgs {
     /// Print per-section explanation
     #[arg(long)]
     explain: bool,
+    /// Try this many seeds per section and keep the best before rendering
+    #[arg(long, default_value_t = 1)]
+    explore: u64,
 }
 
-#[derive(serde::Deserialize)]
-struct SuiteFile {
-    #[serde(default)]
-    name: String,
-    section: Vec<SuiteSection>,
-}
-
-#[derive(serde::Deserialize)]
-struct SuiteSection {
-    #[serde(default)]
-    name: String,
-    chords: String,
-    key: String,
-    #[serde(default = "default_meter")]
-    meter: String,
-    tempo: u32,
-    bars: u32,
-    #[serde(default)]
-    tension: Option<Vec<f32>>,
-    #[serde(default = "default_seed")]
-    seed: u64,
-    #[serde(default = "default_instrument")]
-    instrument: String,
-    #[serde(default)]
-    octave: i32,
-    #[serde(default = "default_style")]
-    style: String,
-    #[serde(default = "default_form")]
-    form: String,
-}
-
-fn default_meter() -> String {
-    "4/4".into()
-}
-fn default_seed() -> u64 {
-    1
-}
-fn default_instrument() -> String {
-    "piano".into()
-}
-fn default_style() -> String {
-    "orchestral".into()
-}
-fn default_form() -> String {
-    "auto".into()
-}
 
 #[derive(clap::Args)]
 struct GenerateArgs {
@@ -156,7 +136,8 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.cmd {
         Cmd::Generate(args) => generate(args),
-        Cmd::Suite(args) => suite(args),
+        Cmd::Suite(args) => suite_cmd(args),
+        Cmd::Prompt(args) => prompt_cmd(args),
     }
 }
 
@@ -193,7 +174,7 @@ fn generate(args: GenerateArgs) -> Result<()> {
         .clone()
         .unwrap_or_else(|| tension::default_curve(args.bars));
     let form = form::Form::plan(args.form, args.bars);
-    let program = gm_program(&args.instrument)?;
+    let program = suite::gm_program(&args.instrument)?;
 
     for i in 0..args.variants {
         let seed = args.seed + i as u64;
@@ -211,6 +192,7 @@ fn generate(args: GenerateArgs) -> Result<()> {
                     style: args.style,
                     seed,
                     form: &form,
+                    ends_open: false,
                 };
                 search::beam_search(&input, &cfg, &rule_set).0
             }
@@ -226,6 +208,7 @@ fn generate(args: GenerateArgs) -> Result<()> {
             tension: &tension,
             complete: true,
             form: &form,
+            ends_open: false,
         };
         let eval = rules::evaluate(&ctx, &cfg, &rule_set);
         let note_count = melody.notes().count();
@@ -247,90 +230,70 @@ fn generate(args: GenerateArgs) -> Result<()> {
     Ok(())
 }
 
-fn suite(args: SuiteArgs) -> Result<()> {
-    use clap::ValueEnum;
-    let text = std::fs::read_to_string(&args.file)
-        .with_context(|| format!("reading {}", args.file.display()))?;
-    let file: SuiteFile = toml::from_str(&text).context("parsing suite file")?;
+fn report(file: &suite::SuiteFile, rendered: &[suite::Rendered], out: &std::path::Path, explain: bool, cfg: &config::Config) {
+    for (sec, r) in file.section.iter().zip(rendered) {
+        println!(
+            "section {}: {} bars, {}, {} BPM, {}, seed {}, score {:.2}{}",
+            sec.name, sec.bars, sec.key, sec.tempo, sec.instrument, sec.seed, r.eval.total,
+            if sec.ends_open { " (open)" } else { "" }
+        );
+        if explain {
+            print_explanation(&r.eval, &r.energy, cfg);
+        }
+    }
+    println!(
+        "wrote {} ({}, {} sections, {} bars)",
+        out.display(), file.name, file.section.len(), suite::total_bars(file)
+    );
+}
+
+fn suite_cmd(args: SuiteArgs) -> Result<()> {
+    let mut file = suite::load(&args.file)?;
     let cfg = config::Config::load(args.rules.as_deref())?;
     let rule_set = rules::all_rules();
     cfg.validate(&rule_set)?;
+    if args.explore > 1 {
+        let (best, log) = suite::explore(&file, args.explore, &cfg, &rule_set)?;
+        for l in log {
+            println!("{l}");
+        }
+        file = best;
+    }
+    let rendered = suite::render(&file, &args.out, &cfg, &rule_set)?;
+    report(&file, &rendered, &args.out, args.explain, &cfg);
+    Ok(())
+}
 
-    struct Rendered {
-        melody: model::Melody,
-        chords: Vec<parser::ChordSpan>,
-        meter: model::Meter,
-        tempo: u32,
-        style: model::Style,
-        energy: Vec<f32>,
-        program: u8,
-        octave: i32,
-        phrase_ends: Vec<u32>,
-        offset: u32,
+fn prompt_cmd(args: PromptArgs) -> Result<()> {
+    let plan = prompt::plan(&args.text);
+    println!(
+        "plan: {} {:?}, {} BPM, {}, style {}, sections {}, instruments {}",
+        plan.tonic.name(),
+        plan.mode,
+        plan.tempo,
+        plan.meter,
+        plan.style,
+        plan.sections.iter().collect::<String>(),
+        plan.instruments.join("/")
+    );
+    for n in &plan.notes {
+        println!("  {n}");
     }
-    let mut rendered: Vec<Rendered> = Vec::new();
-    let mut offset = 0;
-    for (i, sec) in file.section.iter().enumerate() {
-        let key = parser::parse_key(&sec.key)?;
-        let meter = parser::parse_meter(&sec.meter)?;
-        let spans = parser::parse_progression(&sec.chords, meter, sec.bars)?;
-        let tension = sec.tension.clone().unwrap_or_else(|| tension::default_curve(sec.bars));
-        if tension.len() as u32 != sec.bars {
-            bail!("section {}: tension needs {} values", i + 1, sec.bars);
-        }
-        let style = model::Style::from_str(&sec.style, true).map_err(|e| anyhow::anyhow!(e))?;
-        let template = form::Template::from_str(&sec.form, true).map_err(|e| anyhow::anyhow!(e))?;
-        let form = form::Form::plan(template, sec.bars);
-        let input = search::SearchInput {
-            chords: &spans,
-            key,
-            meter,
-            bars: sec.bars,
-            tension: &tension,
-            style,
-            seed: sec.seed,
-            form: &form,
-        };
-        let (melody, eval) = search::beam_search(&input, &cfg, &rule_set);
-        let label = if sec.name.is_empty() { format!("{}", i + 1) } else { sec.name.clone() };
-        println!(
-            "section {label}: {} bars, {key}, {} BPM, {}, score {:.2}",
-            sec.bars, sec.tempo, sec.instrument, eval.total
-        );
-        if args.explain {
-            print_explanation(&eval, &tension, &cfg);
-        }
-        rendered.push(Rendered {
-            melody,
-            chords: spans,
-            meter,
-            tempo: sec.tempo,
-            style,
-            energy: tension,
-            program: gm_program(&sec.instrument)?,
-            octave: sec.octave,
-            phrase_ends: form.phrase_ends(),
-            offset,
-        });
-        offset += sec.bars * meter.steps_per_bar();
+    let file = prompt::to_suite(&plan);
+    let cfg = config::Config::load(args.rules.as_deref())?;
+    let rule_set = rules::all_rules();
+    cfg.validate(&rule_set)?;
+    let (best, log) = suite::explore(&file, args.seeds.max(1), &cfg, &rule_set)?;
+    for l in log {
+        println!("{l}");
     }
-    let sections: Vec<midi::Section> = rendered
-        .iter()
-        .map(|r| midi::Section {
-            melody: &r.melody,
-            chords: &r.chords,
-            meter: r.meter,
-            tempo_bpm: r.tempo,
-            style: r.style,
-            energy: &r.energy,
-            program: r.program,
-            octave: r.octave,
-            phrase_ends: &r.phrase_ends,
-            offset: r.offset,
-        })
-        .collect();
-    midi::write_suite(&args.out, &sections)?;
-    println!("wrote {} ({}, {} sections, {} bars)", args.out.display(), file.name, sections.len(), offset / 16);
+    let rendered = suite::render(&best, &args.out, &cfg, &rule_set)?;
+    report(&best, &rendered, &args.out, false, &cfg);
+    if args.save_suite {
+        let toml_path = args.out.with_extension("toml");
+        suite::save(&toml_path, &best)?;
+        println!("saved suite to {}", toml_path.display());
+    }
     Ok(())
 }
 
@@ -378,31 +341,6 @@ fn print_explanation(eval: &rules::Evaluation, target: &[f32], cfg: &config::Con
         println!("  {:<28} {:+.2} (score {:+.2} x weight {:.1}){flag}{forgiven}", r.name, r.weighted(), r.result.score, r.weight);
     }
     println!("Total {:.2}", eval.total);
-}
-
-/// General MIDI program for a few common instrument names, or a number.
-fn gm_program(name: &str) -> Result<u8> {
-    let n = name.trim().to_ascii_lowercase();
-    Ok(match n.as_str() {
-        "piano" => 0,
-        "harpsichord" => 6,
-        "guitar" => 24,
-        "violin" => 40,
-        "viola" => 41,
-        "cello" => 42,
-        "strings" => 48,
-        "trumpet" => 56,
-        "trombone" => 57,
-        "tuba" => 58,
-        "muted_trumpet" => 59,
-        "horn" => 60,
-        "brass" => 61,
-        "timpani" => 47,
-        "oboe" => 68,
-        "clarinet" => 71,
-        "flute" => 73,
-        _ => n.parse::<u8>().map_err(|_| anyhow::anyhow!("unknown instrument '{name}'"))?,
-    })
 }
 
 fn is_tension_rule(name: &str) -> bool {

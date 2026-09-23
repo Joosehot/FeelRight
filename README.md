@@ -40,8 +40,37 @@ melody generate \
 | `--variants N` | Writes `out-1.mid` .. `out-N.mid` with seeds `seed..seed+N` |
 | `--explain` | Per-bar target vs observed tension, top contributions, broken rules |
 
-Output MIDI has four tracks: conductor, melody (velocity follows the
-tension curve), accompaniment, bass.
+Output MIDI has a conductor track, one melody track per section (velocity
+follows the tension curve and the phrase shape), accompaniment, bass and,
+for orchestral styles, a second accompaniment layer.
+
+## Suites: multi-section pieces
+
+```
+melody suite --file examples/orkesteri.toml --out orkesteri.mid --explore 6 --explain
+```
+
+A suite file lists `[[section]]` tables with `chords`, `key`, `meter`,
+`tempo`, `bars`, `tension`, `seed`, `instrument`, `octave`, `style`
+(`classical`, `pop`, `orchestral`, `brass`, `concerto`, `waltz`, `rapids`),
+`form`, and optionally `melody` (a fixed tune in `C4:4 D4:2 r:2` notation,
+with `transpose`) and `ends_open = true` when the section leads into the
+next one. `--explore N` tries N seeds per section and keeps the best by
+evaluator score. See `examples/*.toml`.
+
+## Prompt translator
+
+```
+melody prompt "mahtipontinen orkesterikappale d-molli ABC viulu" --seeds 6 --out piece.mid --save-suite
+```
+
+A deterministic keyword mapper (Finnish and English, no language model)
+turns a short description into a suite: mood words set mode, tempo and
+energy; style words pick the accompaniment; instrument names, a key such
+as `d-molli` or `Bb major`, a `120 bpm` tempo and section letters (`ABC`,
+`ABA`, `ABCA`) are honoured. The evaluator then searches seeds per
+section, renders the best, and `--save-suite` writes the chosen suite as
+TOML for hand editing.
 
 ## Layout
 
@@ -52,6 +81,8 @@ tension curve), accompaniment, bass.
 - `src/search.rs` — beam search
 - `src/rules/` — one file per rule, `Rule` trait in `mod.rs`
 - `src/tension.rs` — default curve, observed tension, match term
+- `src/suite.rs` — suite file format, rendering, seed exploration
+- `src/prompt.rs` — keyword translator from text to suite
 - `src/midi.rs` — MIDI writer
 - `rules.toml` — all weights and parameters
 - `examples/out/` — generated examples with their explanations

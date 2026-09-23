@@ -51,7 +51,7 @@ impl Rule for QuestionAnswer {
             if let Some(last) = ctx.notes().last() {
                 n += 1;
                 let closed = ctx.key.degree(PitchClass::of_midi(last.pitch)) == Some(1);
-                sum += if closed { 1.0 } else { -1.0 };
+                sum += if closed != ctx.ends_open { 1.0 } else { -1.0 };
             }
         }
         res.score = if n > 0 { sum / n as f32 } else { 0.0 };

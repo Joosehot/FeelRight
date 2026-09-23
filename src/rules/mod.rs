@@ -58,6 +58,9 @@ pub struct Context<'a> {
     pub complete: bool,
     /// Phrase plan (bar roles).
     pub form: &'a Form,
+    /// The melody leads into another section: ending rules expect an
+    /// open ending (degree 2, 5 or 7) instead of the tonic.
+    pub ends_open: bool,
 }
 
 impl<'a> Context<'a> {
@@ -279,6 +282,7 @@ pub mod test_util {
                 tension: &[],
                 complete: true,
                 form: &self.form,
+                ends_open: false,
             }
         }
         pub fn rule_cfg(&self, name: &str) -> &RuleConfig {

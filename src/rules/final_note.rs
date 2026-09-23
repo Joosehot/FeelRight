@@ -31,6 +31,25 @@ impl Rule for FinalNote {
         };
         let mut res = RuleResult::default();
         let bar = ctx.bar_of(last.start);
+        if ctx.ends_open {
+            // Leading into the next section: dominant-side degrees are the
+            // goal, the tonic is too final.
+            res.score = match ctx.key.degree(pc) {
+                Some(5) | Some(7) | Some(2) => 1.0,
+                Some(3) => cfg.param("third_score"),
+                Some(1) => -cfg.param("third_score"),
+                _ => -1.0,
+            };
+            if res.score < 0.0 {
+                res.broken = true;
+                res.details.push(Detail { bar, score: res.score, text: format!("open ending wanted, got {pc}") });
+            }
+            if !ctx.is_strong(last.start) {
+                res.score -= cfg.param("weak_beat_penalty");
+            }
+            res.score = res.score.max(-1.0);
+            return res;
+        }
         res.score = if pc == tonic {
             1.0
         } else if pc == third {

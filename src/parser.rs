@@ -202,3 +202,52 @@ mod tests {
         assert_eq!(p[2].start, 24);
     }
 }
+
+/// Parse a fixed melody: whitespace-separated `NAME:DUR` tokens, e.g.
+/// `C4:4 D4:2 r:2 Bb4:8`. Durations are grid steps (16ths). `r` is a
+/// rest. Bar lines `|` are ignored. `transpose` shifts by semitones.
+pub fn parse_melody(text: &str, transpose: i32) -> Result<crate::model::Melody> {
+    use crate::model::{Event, Melody, Note};
+    let mut m = Melody::default();
+    let mut t = 0;
+    for tok in text.split_whitespace() {
+        if tok == "|" {
+            continue;
+        }
+        let (name, dur) = tok
+            .split_once(':')
+            .ok_or_else(|| anyhow!("melody token '{tok}' must look like C4:4 or r:2"))?;
+        let dur: u32 = dur.parse().with_context(|| format!("duration in '{tok}'"))?;
+        if dur == 0 {
+            bail!("zero duration in '{tok}'");
+        }
+        if name.eq_ignore_ascii_case("r") {
+            m.push(Event::Rest { start: t, dur });
+        } else {
+            let (pc, rest) = parse_root(name)?;
+            let octave: i32 = rest.parse().with_context(|| format!("octave in '{tok}'"))?;
+            let midi = (octave + 1) * 12 + pc.0 as i32 + transpose;
+            if !(0..=127).contains(&midi) {
+                bail!("note '{tok}' is out of MIDI range");
+            }
+            m.push(Event::Note(Note { pitch: midi as u8, start: t, dur }));
+        }
+        t += dur;
+    }
+    Ok(m)
+}
+
+#[cfg(test)]
+mod melody_tests {
+    use super::*;
+
+    #[test]
+    fn fixed_melody() {
+        let m = parse_melody("C4:4 r:2 Bb4:2 | G#3:8", 0).unwrap();
+        let p: Vec<u8> = m.notes().map(|n| n.pitch).collect();
+        assert_eq!(p, vec![60, 70, 56]);
+        assert_eq!(m.total_steps(), 16);
+        assert_eq!(parse_melody("C4:4", 1).unwrap().notes().next().unwrap().pitch, 61);
+        assert!(parse_melody("C4", 0).is_err());
+    }
+}

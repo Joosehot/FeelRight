@@ -34,6 +34,7 @@ pub struct SearchInput<'a> {
     pub style: Style,
     pub seed: u64,
     pub form: &'a Form,
+    pub ends_open: bool,
 }
 
 /// Pitch choices for one slot: chord tones always; diatonic scale tones on
@@ -165,6 +166,7 @@ fn score_prefix(input: &SearchInput, melody: &Melody, complete: bool, cfg: &Conf
         tension: input.tension,
         complete,
         form: input.form,
+        ends_open: input.ends_open,
     };
     evaluate(&ctx, cfg, rules)
 }
@@ -241,7 +243,7 @@ mod tests {
         let (chords, key, meter, form) = setup();
         let cfg = Config::default_config();
         let rules = all_rules();
-        let input = SearchInput { chords: &chords, key, meter, bars: 8, tension: &[], style: Style::Classical, seed: 3, form: &form };
+        let input = SearchInput { chords: &chords, key, meter, bars: 8, tension: &[], style: Style::Classical, seed: 3, form: &form, ends_open: false };
         let (a, ea) = beam_search(&input, &cfg, &rules);
         let (b, _) = beam_search(&input, &cfg, &rules);
         assert_eq!(a, b);
@@ -255,7 +257,7 @@ mod tests {
         let cfg = Config::default_config();
         let rules = all_rules();
         for seed in 1..=3 {
-            let input = SearchInput { chords: &chords, key, meter, bars: 8, tension: &[], style: Style::Classical, seed, form: &form };
+            let input = SearchInput { chords: &chords, key, meter, bars: 8, tension: &[], style: Style::Classical, seed, form: &form, ends_open: false };
             let (_, beam_eval) = beam_search(&input, &cfg, &rules);
             let random = random_chord_tone_melody(&chords, meter, 8, seed, Style::Classical);
             let rand_eval = score_prefix(&input, &random, true, &cfg, &rules);
@@ -266,7 +268,7 @@ mod tests {
     #[test]
     fn transformations_fill_the_bar() {
         let (chords, key, meter, form) = setup();
-        let input = SearchInput { chords: &chords, key, meter, bars: 8, tension: &[], style: Style::Classical, seed: 1, form: &form };
+        let input = SearchInput { chords: &chords, key, meter, bars: 8, tension: &[], style: Style::Classical, seed: 1, form: &form, ends_open: false };
         let src = vec![
             Event::Note(Note { pitch: 69, start: 0, dur: 4 }),
             Event::Note(Note { pitch: 71, start: 4, dur: 4 }),

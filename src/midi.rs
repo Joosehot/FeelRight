@@ -209,6 +209,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
             Style::Brass => (GM_BRASS_SECTION, GM_TUBA, GM_TIMPANI),
             Style::Concerto => (0, GM_CONTRABASS, GM_STRINGS),
             Style::Waltz => (0, GM_CONTRABASS, GM_STRINGS),
+            Style::Rapids => (0, 0, GM_STRINGS),
             _ => (0, 0, 0),
         };
         program_change(&mut chd, tick0, CH_CHORDS, chord_prog);
@@ -288,6 +289,35 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
                                 }
                             }
                             t += spbeat;
+                        }
+                    }
+                }
+                Style::Rapids => {
+                    // Left hand: 16th arpeggio up two octaves and back,
+                    // 8 notes per half bar, velocity rising and falling
+                    // with the figure. Octave bass on beat 1 of each span.
+                    // Faster (32nd-like doubling) when tension is high.
+                    let v = chord_voicing(span);
+                    let (a, b, c) = (v[0], v[1], v[2]);
+                    let cycle = [a, b, c, a + 12, b + 12, c + 12, b + 12, c];
+                    let end = span.start + span.len;
+                    let mut t = span.start;
+                    let mut i = 0usize;
+                    let base_vel = 34.0 + 40.0 * e;
+                    while t < end {
+                        let shape = 1.0 + 0.25 * (i % 8) as f32 / 8.0;
+                        let vel = (base_vel * shape).round().min(110.0) as u8;
+                        note_pair(&mut chd, CH_CHORDS, cycle[i % 8], vel, off + t, 1);
+                        t += 1;
+                        i += 1;
+                    }
+                    let bvel = (BASS_VEL_LO as f32 + (BASS_VEL_HI - BASS_VEL_LO) as f32 * e).round() as u8;
+                    note_pair(&mut bass, CH_BASS, root.saturating_sub(12).max(24), bvel, off + span.start, span.len);
+                    note_pair(&mut bass, CH_BASS, root, bvel, off + span.start, span.len);
+                    if e >= 0.6 {
+                        let svel = (20.0 + 30.0 * e).round() as u8;
+                        for p in chord_voicing(span) {
+                            note_pair(&mut layer, CH_LAYER, p + 12, svel, off + span.start, span.len);
                         }
                     }
                 }
@@ -381,7 +411,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
     }
     smf.tracks.push(to_track(chd));
     smf.tracks.push(to_track(bass));
-    if sections.iter().any(|s| matches!(s.style, Style::Orchestral | Style::Brass | Style::Concerto | Style::Waltz)) {
+    if sections.iter().any(|s| matches!(s.style, Style::Orchestral | Style::Brass | Style::Concerto | Style::Waltz | Style::Rapids)) {
         smf.tracks.push(to_track(layer));
     }
 
