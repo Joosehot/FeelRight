@@ -1,0 +1,88 @@
+# Orchestral piece in five sections. Quiet strings open in E-flat major,
+# the horn states the main theme, a C minor storm with brass and piano
+# octaves, the theme returns with the full orchestra, and a solo violin
+# closes over held strings. Every later section borrows the horn theme.
+
+name = "Aamunkoitto"
+
+[[section]]
+name = "A aamu"
+chords = "Eb Ab Bb Eb | Cm Ab Bb Bb"
+key = "Eb:major"
+tempo = 72
+bars = 8
+seed = 3
+instrument = "strings"
+octave = 1
+style = "orchestral"
+form = "period"
+tension = [0.1, 0.15, 0.2, 0.25, 0.2, 0.3, 0.4, 0.5]
+ends_open = true
+refine = 40
+
+[[section]]
+name = "B teema"
+chords = "Eb Bb Cm Ab | Eb Bb Ab Bb | Cm Gm Ab Eb | Ab Eb Bb Eb"
+key = "Eb:major"
+tempo = 84
+bars = 16
+seed = 12
+instrument = "horn"
+octave = 0
+style = "orchestral"
+form = "period"
+tension = [0.3, 0.4, 0.4, 0.5, 0.4, 0.5, 0.6, 0.5, 0.4, 0.5, 0.7, 0.8, 0.6, 0.5, 0.5, 0.6]
+ends_open = true
+bridge = 2
+refine = 60
+rules_override = { mostly_steps = { min_ratio = 0.5 }, density = { weight = 3.0 } }
+
+[[section]]
+name = "C myrsky"
+chords = "Cm Ab G7 Cm | Fm Cm G7 Cm | Cm Ab Eb Bb | Ab Fm G7 G7"
+key = "C:minor"
+tempo = 120
+bars = 16
+seed = 7
+instrument = "trumpet"
+octave = 0
+style = "concerto"
+form = "aaba"
+tension = [0.6, 0.7, 0.7, 0.8, 0.7, 0.8, 0.9, 0.9, 0.7, 0.8, 1.0, 1.0, 0.9, 0.8, 0.8, 0.9]
+ends_open = true
+bridge = 2
+theme_from = "B teema"
+refine = 60
+rules_override = { single_climax = { weight = 4.0, min_height = 10 }, max_leap = { soft_max = 12 }, syncopation = { threshold = 0.5 } }
+
+[[section]]
+name = "D paluu tutti"
+chords = "Eb Bb Cm Ab | Eb Bb Ab Bb | Cm Gm Ab Eb | Ab Bb Eb Eb"
+key = "Eb:major"
+tempo = 88
+bars = 16
+seed = 12
+instrument = "brass"
+octave = 0
+style = "brass"
+form = "period"
+tension = [0.7, 0.8, 0.8, 0.9, 0.8, 0.9, 1.0, 0.9, 0.8, 0.9, 1.0, 1.0, 0.9, 0.7, 0.5, 0.4]
+ends_open = true
+theme_from = "B teema"
+refine = 60
+rules_override = { mostly_steps = { min_ratio = 0.5 }, density = { weight = 3.0 } }
+
+[[section]]
+name = "E kooda"
+chords = "Ab Eb Bb Eb | Cm Ab Bb Eb"
+key = "Eb:major"
+tempo = 66
+bars = 8
+seed = 5
+instrument = "violin"
+octave = 1
+style = "orchestral"
+form = "period"
+tension = [0.3, 0.3, 0.4, 0.3, 0.3, 0.4, 0.2, 0.1]
+theme_from = "B teema"
+refine = 40
