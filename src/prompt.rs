@@ -162,6 +162,14 @@ pub fn plan(text: &str) -> Plan {
         energy = energy.max(0.6);
         notes.push("mood: comic".into());
     }
+    if has(&t, &["phonk", "aura", "meme", "sigma", "drift"]) {
+        style = "phonk".into();
+        instruments = vec!["lead".into(), "lead".into(), "lead".into()];
+        mode = Mode::Minor;
+        tempo = 140;
+        energy = energy.max(0.7);
+        notes.push("style: phonk".into());
+    }
     if has(&t, &["rap", "hip hop", "hiphop", "boom bap", "biggie", "räppi"]) {
         style = "boom-bap".into();
         instruments = vec!["flute".into(), "epiano".into(), "flute".into()];

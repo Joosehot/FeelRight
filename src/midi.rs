@@ -239,6 +239,10 @@ const GM_BANDONEON: u8 = 23;
 const GM_STEEL_GUITAR: u8 = 25;
 const GM_CHURCH_ORGAN: u8 = 19;
 const GM_SYNTH_BASS: u8 = 38;
+const GM_SYNTH_BASS_2: u8 = 39;
+const GM_PAD_DARK: u8 = 89;
+const DRUM_CLAP: u8 = 39;
+const DRUM_COWBELL: u8 = 56;
 const DRUM_KICK: u8 = 36;
 const DRUM_SNARE: u8 = 38;
 const DRUM_HIHAT_CLOSED: u8 = 42;
@@ -339,6 +343,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
             Style::Classical | Style::Rapids | Style::Baroque | Style::Waltz | Style::Concerto => ("left hand", "bass", "strings"),
             Style::Jazz => ("comping", "walking bass", "drums"),
             Style::BoomBap => ("rhodes", "bass", "strings"),
+            Style::Phonk => ("pad", "808", "pad high"),
             Style::Brass => ("brass section", "tuba", "timpani"),
             Style::Western => ("guitar", "bass", "low strings"),
             Style::Circus => ("accordion", "tuba", "woodblocks"),
@@ -353,7 +358,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
         let pending_bass = format!("{} - {bass_label}", sec.name);
         let pending_layer = format!("{} - {layer_label}", sec.name);
         let pending_glock = format!("{} - glockenspiel", sec.name);
-        let pending_drums = format!("{} - {}", sec.name, if sec.style == Style::BoomBap { "drums" } else { "hoofbeats" });
+        let pending_drums = format!("{} - {}", sec.name, if matches!(sec.style, Style::BoomBap | Style::Phonk) { "drums" } else { "hoofbeats" });
 
         // Accompaniment.
         let (chord_prog, bass_prog, layer_prog) = match sec.style {
@@ -369,6 +374,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
             Style::Western => (GM_STEEL_GUITAR, GM_CONTRABASS, GM_STRINGS),
             Style::Organ => (GM_CHURCH_ORGAN, GM_CHURCH_ORGAN, GM_CHURCH_ORGAN),
             Style::BoomBap => (GM_EPIANO, GM_SYNTH_BASS, GM_STRINGS),
+            Style::Phonk => (GM_PAD_DARK, GM_SYNTH_BASS_2, GM_PAD_DARK),
             _ => (0, 0, 0),
         };
         let (chord_prog, bass_prog) = match sec.acc_program {
@@ -485,6 +491,59 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
                             t += spbeat;
                         }
                     }
+                }
+                Style::Phonk => {
+                    // Half-time: kick on 1 and the "and" of 2 (plus a pickup
+                    // 16th before 3 when tense), clap on 3. Hi-hats every
+                    // 16th, accented on the 8ths, with a louder roll over
+                    // the last beat every other bar. Cowbell on 2 and the
+                    // "and" of 3 from tension 0.6. 808: the root, an octave
+                    // and a half down, held from each kick to the next.
+                    let v = voice_lead(span, prev_voicing.as_deref(), 50, 62);
+                    let end = span.start + span.len;
+                    let mut t = span.start;
+                    while t < end {
+                        let bar_start = t - t % spb;
+                        let bar_end = (bar_start + spb).min(end);
+                        let bar_idx = bar_start / spb;
+                        let mut kicks: Vec<u32> = vec![0, 6];
+                        if e >= 0.6 {
+                            kicks.push(11);
+                        }
+                        for k in 0..spb {
+                            let st = bar_start + k;
+                            if st < t || st >= bar_end {
+                                continue;
+                            }
+                            if kicks.contains(&k) {
+                                note_pair(&mut layer_drums, CH_DRUMS, DRUM_KICK, 118, off + st, 1);
+                                let next_kick = kicks.iter().copied().filter(|&x| x > k).min().unwrap_or(spb);
+                                note_pair(&mut bass, CH_BASS, root.saturating_sub(17).max(24), 112, off + st, next_kick - k);
+                            }
+                            if k == 8 {
+                                note_pair(&mut layer_drums, CH_DRUMS, DRUM_CLAP, 110, off + st, 1);
+                                note_pair(&mut layer_drums, CH_DRUMS, DRUM_SNARE, 70, off + st, 1);
+                            }
+                            let roll = bar_idx % 2 == 1 && k >= 12;
+                            let hv = if k % 4 == 0 { 78 } else if k % 2 == 0 { 62 } else if roll { 66 } else { 44 };
+                            note_pair(&mut layer_drums, CH_DRUMS, DRUM_HIHAT_CLOSED, hv, off + st, 1);
+                            if e >= 0.6 && (k == 4 || k == 10) {
+                                note_pair(&mut layer_drums, CH_DRUMS, DRUM_COWBELL, 96, off + st, 1);
+                            }
+                        }
+                        t = bar_end;
+                    }
+                    // Dark pad, rootless, held; a higher pad layer when tense.
+                    let vel = (44.0 + 36.0 * e).round() as u8;
+                    for p in v.iter().skip(1) {
+                        note_pair(&mut chd, CH_CHORDS, *p, vel, off + span.start, span.len);
+                    }
+                    if e >= 0.5 {
+                        for p in v.iter().skip(1) {
+                            note_pair(&mut layer, CH_LAYER, p + 12, vel.saturating_sub(20), off + span.start, span.len);
+                        }
+                    }
+                    prev_voicing = Some(v);
                 }
                 Style::BoomBap => {
                     // Drum pattern per bar (16 steps), two variants that

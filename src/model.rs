@@ -57,6 +57,9 @@ pub enum Style {
     /// Boom bap: 90s hip-hop drums (kick, snare on 2 and 4, 8th hi-hats),
     /// deep bass on the kicks, electric-piano chord stabs, a string pad.
     BoomBap,
+    /// Phonk: half-time clap on 3, long 808 bass on the kicks, 16th-note
+    /// trap hi-hats with rolls, cowbell hits when tense, dark synth pad.
+    Phonk,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
