@@ -69,6 +69,10 @@ pub struct SuiteSection {
     /// and keeps it only if the score improves. 0 = off.
     #[serde(default)]
     pub refine: u32,
+    /// Instrument for the accompaniment (chords and bass) instead of the
+    /// style's default, e.g. "harp" for a solo harp piece.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub accompaniment: Option<String>,
 }
 
 fn default_meter() -> String {
@@ -104,6 +108,7 @@ pub fn gm_program(name: &str) -> Result<u8> {
         "piano" => 0,
         "harpsichord" => 6,
         "organ" | "church_organ" => 19,
+        "harp" => 46,
         "guitar" => 24,
         "violin" => 40,
         "viola" => 41,
@@ -153,6 +158,7 @@ pub struct Rendered {
     pub phrase_ends: Vec<u32>,
     pub eval: Evaluation,
     pub refine_log: Vec<search::RefineStep>,
+    pub acc_program: Option<u8>,
 }
 
 /// What a section needs from its neighbours.
@@ -257,6 +263,10 @@ pub fn render_section(sec: &SuiteSection, nb: &Neighbours, base_cfg: &Config, ru
         phrase_ends: form.phrase_ends(),
         eval,
         refine_log,
+        acc_program: match &sec.accompaniment {
+            Some(name) => Some(gm_program(name)?),
+            None => None,
+        },
     })
 }
 
@@ -304,6 +314,7 @@ pub fn render(file: &SuiteFile, out: &Path, cfg: &Config, rules: &[Box<dyn Rule>
             octave: r.octave,
             phrase_ends: &r.phrase_ends,
             offset,
+            acc_program: r.acc_program,
         });
         offset += r.melody.total_steps();
     }

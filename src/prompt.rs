@@ -414,6 +414,7 @@ pub fn to_suite(plan: &Plan) -> SuiteFile {
             bridge: if last { 0 } else { 1 },
             rules_override: None,
             refine: 40,
+            accompaniment: None,
         });
     }
     SuiteFile { name: plan.name.clone(), section: sections }

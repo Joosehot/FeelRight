@@ -213,6 +213,8 @@ pub struct Section<'a> {
     pub octave: i32,
     pub phrase_ends: &'a [u32],
     pub offset: u32,
+    /// Override for the accompaniment programs (chords and bass).
+    pub acc_program: Option<u8>,
 }
 
 const CH_CHORDS: u8 = 8;
@@ -323,6 +325,10 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
             Style::Baroque => (GM_NYLON_GUITAR, GM_NYLON_GUITAR, 0),
             Style::Tango => (GM_BANDONEON, GM_CONTRABASS, GM_STRINGS),
             _ => (0, 0, 0),
+        };
+        let (chord_prog, bass_prog) = match sec.acc_program {
+            Some(p) => (p, p),
+            None => (chord_prog, bass_prog),
         };
         program_change(&mut chd, tick0, CH_CHORDS, chord_prog);
         program_change(&mut bass, tick0, CH_BASS, bass_prog);
@@ -784,7 +790,7 @@ pub fn write_midi(
 ) -> Result<()> {
     write_suite(
         path,
-        &[Section { melody, chords, meter, tempo_bpm, style, energy, program, octave, phrase_ends, offset: 0 }],
+        &[Section { melody, chords, meter, tempo_bpm, style, energy, program, octave, phrase_ends, offset: 0, acc_program: None }],
     )
 }
 
