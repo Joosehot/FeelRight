@@ -34,7 +34,7 @@ impl Rule for Sequence {
             let s = if is_transposition(&prev, &cur) && !is_exact(&prev, &cur) {
                 1.0
             } else if similarity(&prev, &cur) >= 0.75
-                && pitches_of(&prev)[0] != pitches_of(&cur)[0]
+                && pitches_of(&prev).first() != pitches_of(&cur).first()
             {
                 cfg.param("partial_credit")
             } else {

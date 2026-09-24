@@ -231,6 +231,7 @@ const DRUM_WOODBLOCK: u8 = 76;
 const DRUM_LOW_WOODBLOCK: u8 = 77;
 const GM_ACCORDION: u8 = 21;
 const GM_NYLON_GUITAR: u8 = 24;
+const GM_BANDONEON: u8 = 23;
 const GM_TUBA: u8 = 58;
 const GM_TIMPANI: u8 = 47;
 
@@ -320,6 +321,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
             Style::Jazz => (GM_EPIANO, GM_ACOUSTIC_BASS, 0),
             Style::Circus => (GM_ACCORDION, GM_TUBA, 0),
             Style::Baroque => (GM_NYLON_GUITAR, GM_NYLON_GUITAR, 0),
+            Style::Tango => (GM_BANDONEON, GM_CONTRABASS, GM_STRINGS),
             _ => (0, 0, 0),
         };
         program_change(&mut chd, tick0, CH_CHORDS, chord_prog);
@@ -431,6 +433,67 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
                             t += spbeat;
                         }
                     }
+                }
+                Style::Tango => {
+                    // Three figures, chosen by bar and tension so no two
+                    // consecutive bars comp the same way:
+                    //   habanera  3+1+2+2 (twice per 4/4 bar)
+                    //   marcato   four staccato quarters, accent on 1 and 3
+                    //   3-3-2     the syncopated tango push
+                    // Phrase-final bars: chord hit on 1, chromatic bass
+                    // walk-down into the next bar.
+                    let v = voice_lead(span, prev_voicing.as_deref(), 55, 67);
+                    let end = span.start + span.len;
+                    let spbeat = sec.meter.steps_per_beat();
+                    let vel = (56.0 + 40.0 * e).round().min(120.0) as u8;
+                    let figure: u32 = if e >= 0.75 { (bar % 2) * 2 } else { bar % 3 };
+                    let hits: Vec<(u32, u32, i8)> = if phrase_end_bar {
+                        vec![(0, 6, 8), (8, 2, 0), (12, 2, -6)]
+                    } else {
+                        match figure {
+                            0 => vec![(0, 3, 6), (3, 1, -10), (4, 2, 0), (6, 2, -4), (8, 3, 6), (11, 1, -10), (12, 2, 0), (14, 2, -4)],
+                            1 => vec![(0, 2, 8), (4, 2, -6), (8, 2, 8), (12, 2, -6)],
+                            _ => vec![(0, 2, 6), (3, 2, -2), (6, 2, 2), (8, 2, 6), (11, 2, -2), (14, 2, 8)],
+                        }
+                    };
+                    for &(at, len, acc) in &hits {
+                        if span.start + at >= end {
+                            break;
+                        }
+                        let vv = (vel as i16 + acc as i16).clamp(20, 127) as u8;
+                        for p in &v {
+                            note_pair(&mut chd, CH_CHORDS, *p, vv, off + span.start + at, len.min(end - span.start - at));
+                        }
+                    }
+                    let next = chords_after(sec.chords, span).map(|c| 36 + c.root.0);
+                    if phrase_end_bar {
+                        let target = next.unwrap_or(root);
+                        let mut t = span.start;
+                        let mut p = root as i32 + 3;
+                        while t < end {
+                            let pitch = if t + spbeat >= end { target as i32 } else { p };
+                            note_pair(&mut bass, CH_BASS, pitch.clamp(28, 60) as u8, bvel, off + t, spbeat / 2);
+                            p -= 1;
+                            t += spbeat;
+                        }
+                    } else {
+                        let mut t = span.start;
+                        let mut i = 0;
+                        while t < end {
+                            let p = if i % 2 == 0 { root } else { root + 7 };
+                            let len = if figure == 2 && i % 2 == 1 { spbeat / 4 } else { spbeat / 2 };
+                            note_pair(&mut bass, CH_BASS, p, bvel + if i % 2 == 0 { 8 } else { 0 }, off + t, len);
+                            t += spbeat;
+                            i += 1;
+                        }
+                    }
+                    if e >= 0.6 {
+                        let svel = (30.0 + 40.0 * e).round() as u8;
+                        for p in &v {
+                            note_pair(&mut layer, CH_LAYER, p + 12, svel, off + span.start, span.len);
+                        }
+                    }
+                    prev_voicing = Some(v);
                 }
                 Style::Baroque => {
                     // Guitar figuration: bass note on each strong beat,
@@ -668,7 +731,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
     }
     smf.tracks.push(to_track(chd));
     smf.tracks.push(to_track(bass));
-    if sections.iter().any(|s| matches!(s.style, Style::Orchestral | Style::Brass | Style::Concerto | Style::Waltz | Style::Rapids | Style::Jazz | Style::Circus)) {
+    if sections.iter().any(|s| matches!(s.style, Style::Orchestral | Style::Brass | Style::Concerto | Style::Waltz | Style::Rapids | Style::Jazz | Style::Circus | Style::Tango)) {
         smf.tracks.push(to_track(layer));
     }
 

@@ -162,6 +162,12 @@ pub fn plan(text: &str) -> Plan {
         energy = energy.max(0.6);
         notes.push("mood: comic".into());
     }
+    if has(&t, &["tango", "habanera", "milonga"]) {
+        style = "tango".into();
+        instruments = vec!["bandoneon".into(), "violin".into(), "bandoneon".into()];
+        tempo = tempo.max(120);
+        notes.push("style: tango".into());
+    }
     if has(&t, &["jazz", "swing", "bebop", "blues"]) {
         style = "jazz".into();
         instruments = vec!["sax".into(), "epiano".into(), "trumpet".into()];

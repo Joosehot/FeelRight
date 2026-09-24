@@ -126,6 +126,7 @@ pub fn gm_program(name: &str) -> Result<u8> {
         "xylophone" => 13,
         "pizzicato" => 45,
         "accordion" => 21,
+        "bandoneon" => 23,
         "sax" | "alto_sax" => 65,
         "tenor_sax" => 66,
         "epiano" => 4,

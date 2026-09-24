@@ -43,6 +43,9 @@ pub enum Style {
     /// Baroque: bass on the strong beats, broken chords in even 8ths
     /// (guitar or harpsichord), no swells.
     Baroque,
+    /// Tango: habanera, marcato and 3-3-2 figures alternating in the
+    /// bandoneon, staccato bass with chromatic walk-downs at phrase ends.
+    Tango,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
