@@ -1,0 +1,57 @@
+# Suspense cue in C minor. Shadows on low strings over a pedal, a chase
+# with brass and diminished chords, a climax that is never resolved: the
+# last section ends open, on the dominant, like a held breath. The rule
+# overrides reward delayed resolution and turn off the rules that would
+# make the music settle.
+
+name = "Jännitys"
+
+[[section]]
+name = "A varjot"
+chords = "Cm Cm Ddim G7 | Cm Ab Ddim G7 | Cm Fm Ddim G7 | Cm Ab G7 G7"
+key = "C:minor"
+tempo = 66
+bars = 16
+seed = 13
+instrument = "cello"
+octave = 0
+style = "orchestral"
+form = "period"
+tension = [0.3, 0.35, 0.4, 0.45, 0.4, 0.45, 0.55, 0.6, 0.5, 0.55, 0.65, 0.75, 0.7, 0.7, 0.75, 0.8]
+ends_open = true
+refine = 60
+rules_override = { resolve_after_peak = { weight = 0.0 }, arrival = { weight = 0.0 }, delayed_resolution = { weight = 3.0, high_threshold = 0.5 }, nct_types = { appoggiatura = 0.9, suspension = 0.9, tension_bonus = 1.0 }, chord_tones_on_strong_beats = { weight = 1.5 }, clash = { weight = 1.5, tension = 1.0 }, mostly_steps = { min_ratio = 0.55 }, breathing = { weight = 1.0 }, monotone = { max_repeats = 5 } }
+
+[[section]]
+name = "B takaa-ajo"
+chords = "Cm Ddim G7 Cm | Fm Bdim G7 Cm | Ab Ddim G7 Cm | Fm Ab Ddim G7"
+key = "C:minor"
+tempo = 132
+bars = 16
+seed = 21
+instrument = "trumpet"
+octave = 0
+style = "brass"
+form = "aaba"
+tension = [0.6, 0.65, 0.7, 0.75, 0.7, 0.75, 0.85, 0.85, 0.75, 0.8, 0.9, 0.95, 0.9, 0.9, 0.95, 1.0]
+ends_open = true
+theme_from = "A varjot"
+refine = 60
+rules_override = { resolve_after_peak = { weight = 0.0 }, arrival = { weight = 0.0 }, delayed_resolution = { weight = 3.0, high_threshold = 0.5 }, nct_types = { appoggiatura = 0.9, suspension = 0.9, tension_bonus = 1.0 }, chord_tones_on_strong_beats = { weight = 1.5 }, clash = { weight = 1.5, tension = 1.0 }, syncopation = { threshold = 0.4, weight = 2.5 }, density = { weight = 3.0 }, awkward_intervals = { weight = 0.5 }, max_leap = { soft_max = 12 } }
+
+[[section]]
+name = "C pidätetty hengitys"
+chords = "Cm Ab Ddim G7 | Cm Ab Ddim G7 | Fm Ddim G7 G7 | Ab G7 G7 G7"
+key = "C:minor"
+tempo = 84
+bars = 16
+seed = 9
+instrument = "strings"
+octave = 1
+style = "concerto"
+form = "period"
+tension = [0.7, 0.75, 0.8, 0.85, 0.8, 0.85, 0.9, 0.95, 0.9, 0.95, 1.0, 1.0, 0.6, 0.5, 0.6, 0.8]
+ends_open = true
+theme_from = "A varjot"
+refine = 60
+rules_override = { resolve_after_peak = { weight = 0.0 }, arrival = { weight = 0.0 }, delayed_resolution = { weight = 3.0, high_threshold = 0.5 }, nct_types = { appoggiatura = 0.9, suspension = 0.9, tension_bonus = 1.0 }, chord_tones_on_strong_beats = { weight = 1.5 }, clash = { weight = 1.5, tension = 1.0 }, single_climax = { weight = 4.0, min_height = 12 }, max_leap = { soft_max = 12 }, balanced_direction = { descent_share = 0.0 }, phrase_arch = { min_drop = 0 } }
