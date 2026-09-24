@@ -1,0 +1,116 @@
+# Piano concerto in the spirit of Tchaikovsky's first, second attempt.
+# Six sections, one theme. D-flat major maestoso in 3/4 with horns over
+# piano octaves; a piano cadenza in B-flat minor with sweeping
+# figuration; a lyrical second theme in F major on strings; a storm in
+# C minor with brass; the maestoso theme returning tutti; and the piano
+# alone at the end. Bridges carry every modulation; every later section
+# borrows the maestoso theme.
+
+name = "Pianokonsertto nro 2"
+
+[[section]]
+name = "A maestoso"
+chords = "Db Ab Bbm Gb | Db Ab Gb Ab | Bbm Fm Gb Db | Gb Db Ab Db"
+key = "Db:major"
+meter = "3/4"
+tempo = 92
+bars = 16
+seed = 12
+instrument = "horn"
+octave = 0
+style = "concerto"
+form = "period"
+tension = [0.4, 0.5, 0.5, 0.6, 0.5, 0.6, 0.7, 0.8, 0.6, 0.7, 0.9, 1.0, 0.8, 0.7, 0.6, 0.7]
+ends_open = true
+bridge = 2
+refine = 60
+rules_override = { single_climax = { weight = 4.0, min_height = 10 }, max_leap = { soft_max = 12 }, mostly_steps = { min_ratio = 0.45 }, density = { weight = 2.5 } }
+
+[[section]]
+name = "B kadenssi"
+chords = "Bbm Gb F7 Bbm | Ebm Bbm F7 Bbm | Gb Db Ebm F7 | Bbm Gb F7 F7"
+key = "Bb:minor"
+tempo = 132
+bars = 16
+seed = 5
+instrument = "piano"
+octave = 1
+style = "rapids"
+accompaniment = "piano"
+form = "aaba"
+tension = [0.5, 0.55, 0.6, 0.65, 0.6, 0.65, 0.75, 0.8, 0.7, 0.75, 0.9, 1.0, 0.85, 0.7, 0.6, 0.7]
+ends_open = true
+bridge = 1
+theme_from = "A maestoso"
+refine = 60
+rules_override = { max_leap = { soft_max = 12 }, range = { soft_max = 19, hard_max = 24 }, consecutive_leaps = { max_run = 3 }, mostly_steps = { min_ratio = 0.4, max_ratio = 0.7 }, density = { weight = 3.0 }, surprise = { min_bits = 2.6, max_bits = 4.2 } }
+
+[[section]]
+name = "C sivuteema"
+chords = "F C Dm Bb | F C Bb C | Dm Bb F C | Gm Bb C C7"
+key = "F:major"
+tempo = 76
+bars = 16
+seed = 9
+instrument = "strings"
+octave = 1
+style = "orchestral"
+form = "period"
+tension = [0.2, 0.25, 0.3, 0.35, 0.3, 0.35, 0.45, 0.4, 0.35, 0.4, 0.55, 0.65, 0.5, 0.4, 0.4, 0.5]
+ends_open = true
+bridge = 2
+refine = 60
+rules_override = { mostly_steps = { min_ratio = 0.6 }, breathing = { weight = 4.0 }, nct_types = { appoggiatura = 0.8, suspension = 0.9 } }
+
+[[section]]
+name = "D myrsky"
+chords = "Cm Ab G7 Cm | Fm Cm G7 Cm | Cm Ab Eb Bb | Ab Fm G7 G7"
+key = "C:minor"
+tempo = 126
+bars = 16
+seed = 7
+instrument = "trumpet"
+octave = 0
+style = "brass"
+form = "aaba"
+tension = [0.6, 0.65, 0.7, 0.75, 0.7, 0.75, 0.85, 0.9, 0.75, 0.8, 0.95, 1.0, 0.9, 0.85, 0.85, 0.95]
+ends_open = true
+bridge = 2
+theme_from = "A maestoso"
+refine = 60
+rules_override = { single_climax = { weight = 4.0, min_height = 12 }, max_leap = { soft_max = 12 }, syncopation = { threshold = 0.5, weight = 2.0 }, density = { weight = 3.0 }, awkward_intervals = { weight = 1.0 } }
+
+[[section]]
+name = "E paluu tutti"
+chords = "Db Ab Bbm Gb | Db Ab Gb Ab | Bbm Fm Gb Db | Gb Ab Db Db"
+key = "Db:major"
+meter = "3/4"
+tempo = 100
+bars = 16
+seed = 12
+instrument = "strings"
+octave = 1
+style = "concerto"
+form = "period"
+tension = [0.7, 0.75, 0.8, 0.85, 0.8, 0.85, 0.9, 0.95, 0.85, 0.9, 1.0, 1.0, 0.9, 0.8, 0.6, 0.5]
+ends_open = true
+theme_from = "A maestoso"
+refine = 60
+rules_override = { single_climax = { weight = 4.0, min_height = 12 }, max_leap = { soft_max = 12 }, mostly_steps = { min_ratio = 0.45 }, density = { weight = 2.5 } }
+
+[[section]]
+name = "F kooda"
+chords = "Gb Db Ab Db | Bbm Gb Ab Db"
+key = "Db:major"
+meter = "3/4"
+tempo = 66
+bars = 8
+seed = 4
+instrument = "piano"
+octave = 1
+style = "classical"
+form = "period"
+tension = [0.3, 0.35, 0.4, 0.3, 0.3, 0.35, 0.2, 0.05]
+theme_from = "A maestoso"
+refine = 40
+rules_override = { breathing = { weight = 4.0 }, final_note = { weight = 6.0 }, mostly_steps = { min_ratio = 0.55 } }
