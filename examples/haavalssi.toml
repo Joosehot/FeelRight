@@ -1,0 +1,100 @@
+# Wedding waltz in the spirit of a ballroom waltz from a fairy-tale
+# ballet. B-flat major, tempo di valse. Strings open with a pickup-laden
+# theme over pizzicato oom-pah-pah, the whole string section takes the
+# theme, a horn trio in E-flat, the grand return with brass and timpani,
+# and a coda that spins to a stop.
+
+name = "Häävalssi"
+
+[[section]]
+name = "A johdanto"
+chords = "Bb F Bb F | Gm Eb F F7"
+key = "Bb:major"
+meter = "3/4"
+tempo = 160
+bars = 8
+seed = 5
+instrument = "strings"
+octave = 1
+style = "waltz"
+accompaniment = "pizzicato"
+form = "period"
+tension = [0.2, 0.25, 0.3, 0.35, 0.3, 0.4, 0.5, 0.6]
+ends_open = true
+refine = 40
+rules_override = { nct_types = { appoggiatura = 0.8, suspension = 0.8 }, surprise = { min_bits = 2.4, max_bits = 3.8 }, max_leap = { soft_max = 12 }, mostly_steps = { min_ratio = 0.5 } }
+
+[[section]]
+name = "B valssiteema"
+chords = "Bb F Bb F | Bb Eb F Bb | Gm Dm Eb Bb | Cm F Bb F7"
+key = "Bb:major"
+meter = "3/4"
+tempo = 164
+bars = 16
+seed = 12
+instrument = "strings"
+octave = 1
+style = "waltz"
+accompaniment = "pizzicato"
+form = "period"
+tension = [0.4, 0.45, 0.5, 0.55, 0.5, 0.55, 0.65, 0.7, 0.6, 0.65, 0.8, 0.9, 0.75, 0.65, 0.6, 0.7]
+ends_open = true
+bridge = 1
+theme_from = "A johdanto"
+refine = 60
+rules_override = { nct_types = { appoggiatura = 0.8, suspension = 0.8 }, surprise = { min_bits = 2.4, max_bits = 3.8 }, max_leap = { soft_max = 12 }, single_climax = { weight = 4.0, min_height = 12 }, mostly_steps = { min_ratio = 0.5 } }
+
+[[section]]
+name = "C trio"
+chords = "Eb Bb Eb Bb | Eb Ab Bb Eb | Cm Gm Ab Eb | Fm Bb7 Eb F7"
+key = "Eb:major"
+meter = "3/4"
+tempo = 152
+bars = 16
+seed = 7
+instrument = "horn"
+octave = 0
+style = "waltz"
+accompaniment = "pizzicato"
+form = "sentence"
+tension = [0.3, 0.35, 0.4, 0.45, 0.4, 0.45, 0.55, 0.6, 0.5, 0.55, 0.7, 0.8, 0.65, 0.6, 0.65, 0.75]
+ends_open = true
+bridge = 1
+refine = 60
+rules_override = { nct_types = { appoggiatura = 0.8, suspension = 0.8 }, mostly_steps = { min_ratio = 0.55 }, breathing = { weight = 4.0 } }
+
+[[section]]
+name = "D loistelias paluu"
+chords = "Bb F Bb F | Bb Eb F Bb | Gm Dm Eb Bb | Cm F7 Bb Bb"
+key = "Bb:major"
+meter = "3/4"
+tempo = 168
+bars = 16
+seed = 12
+instrument = "brass"
+octave = 0
+style = "brass"
+form = "period"
+tension = [0.7, 0.75, 0.8, 0.85, 0.8, 0.85, 0.9, 0.9, 0.8, 0.85, 1.0, 1.0, 0.9, 0.8, 0.7, 0.6]
+ends_open = true
+theme_from = "B valssiteema"
+refine = 60
+rules_override = { nct_types = { appoggiatura = 0.8, suspension = 0.8 }, surprise = { min_bits = 2.4, max_bits = 3.8 }, max_leap = { soft_max = 12 }, single_climax = { weight = 4.0, min_height = 12 }, mostly_steps = { min_ratio = 0.5 }, density = { weight = 3.0 } }
+
+[[section]]
+name = "E kooda"
+chords = "Eb F Bb Gm | Eb F7 Bb Bb"
+key = "Bb:major"
+meter = "3/4"
+tempo = 176
+bars = 8
+seed = 4
+instrument = "strings"
+octave = 1
+style = "waltz"
+accompaniment = "pizzicato"
+form = "period"
+tension = [0.8, 0.85, 0.9, 0.95, 1.0, 0.8, 0.5, 0.1]
+theme_from = "A johdanto"
+refine = 40
+rules_override = { max_leap = { soft_max = 12 }, density = { weight = 3.0 }, final_note = { weight = 6.0 }, mostly_steps = { min_ratio = 0.45 } }
