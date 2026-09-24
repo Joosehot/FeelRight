@@ -118,6 +118,9 @@ struct PromptArgs {
     /// Also write the chosen suite as TOML next to the MIDI
     #[arg(long)]
     save_suite: bool,
+    /// Keep exploring seeds until every section reaches this score
+    #[arg(long)]
+    target_score: Option<f32>,
 }
 
 #[derive(clap::Args)]
@@ -141,6 +144,10 @@ struct SuiteArgs {
     /// the file's `refine` when given)
     #[arg(long)]
     refine: Option<u32>,
+    /// Keep exploring seeds in batches of --explore until every section
+    /// reaches this score (at most 12 batches)
+    #[arg(long)]
+    target_score: Option<f32>,
 }
 
 
@@ -346,8 +353,8 @@ fn suite_cmd(args: SuiteArgs) -> Result<()> {
     let cfg = config::Config::load(args.rules.as_deref())?;
     let rule_set = rules::all_rules();
     cfg.validate(&rule_set)?;
-    if args.explore > 1 {
-        let (best, log) = suite::explore(&file, args.explore, &cfg, &rule_set)?;
+    if args.explore > 1 || args.target_score.is_some() {
+        let (best, log) = suite::explore(&file, args.explore.max(4), args.target_score, &cfg, &rule_set)?;
         for l in log {
             println!("{l}");
         }
@@ -382,7 +389,7 @@ fn prompt_cmd(args: PromptArgs) -> Result<()> {
     let cfg = config::Config::load(args.rules.as_deref())?;
     let rule_set = rules::all_rules();
     cfg.validate(&rule_set)?;
-    let (best, log) = suite::explore(&file, args.seeds.max(1), &cfg, &rule_set)?;
+    let (best, log) = suite::explore(&file, args.seeds.max(1), args.target_score, &cfg, &rule_set)?;
     for l in log {
         println!("{l}");
     }

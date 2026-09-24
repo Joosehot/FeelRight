@@ -61,7 +61,9 @@ section's key, `theme_from = "A"` to borrow section A's opening motif
 weight or parameter changes, e.g.
 `rules_override = { max_leap = { soft_max = 12 }, density = { weight = 3.0 } }`.
 `--explore N` tries N seeds per section and keeps the best by evaluator
-score. See `examples/*.toml`.
+score; `--target-score X` keeps adding batches of N seeds (up to 12)
+until every section reaches X; `--refine N` then rewrites one bar per
+round and keeps only improvements. See `examples/*.toml`.
 
 ## Prompt translator
 

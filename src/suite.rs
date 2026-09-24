@@ -333,7 +333,10 @@ pub fn total_bars(file: &SuiteFile) -> u32 {
 
 /// For every generated section, try `seeds` seeds and keep the best by
 /// evaluator score. Returns the improved suite and a log line per section.
-pub fn explore(file: &SuiteFile, seeds: u64, cfg: &Config, rules: &[Box<dyn Rule>]) -> Result<(SuiteFile, Vec<String>)> {
+/// Upper bound on seed batches when a target score is requested.
+const MAX_TARGET_BATCHES: u32 = 12;
+
+pub fn explore(file: &SuiteFile, seeds: u64, target: Option<f32>, cfg: &Config, rules: &[Box<dyn Rule>]) -> Result<(SuiteFile, Vec<String>)> {
     let mut best_file = file.clone();
     let mut log = Vec::new();
     let mut themes: HashMap<String, Theme> = HashMap::new();
@@ -346,36 +349,47 @@ pub fn explore(file: &SuiteFile, seeds: u64, cfg: &Config, rules: &[Box<dyn Rule
             }
             continue;
         }
-        // Render every seed in parallel; the search is deterministic per
-        // seed, so the result does not depend on scheduling.
+        // Render seeds in parallel batches; the search is deterministic
+        // per seed, so the result does not depend on scheduling. With a
+        // target score, keep adding batches until a seed reaches it.
         let threads = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4).max(1);
-        let seed_list: Vec<u64> = (0..seeds).map(|s| sec.seed + s).collect();
-        let mut results: Vec<(u64, Result<Rendered>)> = Vec::with_capacity(seed_list.len());
-        std::thread::scope(|scope| {
-            let mut handles = Vec::new();
-            for chunk in seed_list.chunks(seed_list.len().div_ceil(threads).max(1)) {
-                let chunk = chunk.to_vec();
-                let nb = &nb;
-                handles.push(scope.spawn(move || {
-                    chunk
-                        .into_iter()
-                        .map(|seed| {
-                            let mut trial = sec.clone();
-                            trial.seed = seed;
-                            (seed, render_section(&trial, nb, cfg, rules))
-                        })
-                        .collect::<Vec<_>>()
-                }));
-            }
-            for h in handles {
-                results.extend(h.join().expect("seed worker panicked"));
-            }
-        });
         let mut scored: Vec<(u64, Rendered)> = Vec::new();
-        for (seed, r) in results {
-            scored.push((seed, r?));
+        let mut batch = 0u32;
+        loop {
+            let first = sec.seed + batch as u64 * seeds;
+            let seed_list: Vec<u64> = (0..seeds).map(|s| first + s).collect();
+            let mut results: Vec<(u64, Result<Rendered>)> = Vec::with_capacity(seed_list.len());
+            std::thread::scope(|scope| {
+                let mut handles = Vec::new();
+                for chunk in seed_list.chunks(seed_list.len().div_ceil(threads).max(1)) {
+                    let chunk = chunk.to_vec();
+                    let nb = &nb;
+                    handles.push(scope.spawn(move || {
+                        chunk
+                            .into_iter()
+                            .map(|seed| {
+                                let mut trial = sec.clone();
+                                trial.seed = seed;
+                                (seed, render_section(&trial, nb, cfg, rules))
+                            })
+                            .collect::<Vec<_>>()
+                    }));
+                }
+                for h in handles {
+                    results.extend(h.join().expect("seed worker panicked"));
+                }
+            });
+            for (seed, r) in results {
+                scored.push((seed, r?));
+            }
+            scored.sort_by(|a, b| b.1.eval.total.partial_cmp(&a.1.eval.total).unwrap());
+            batch += 1;
+            let best = scored.first().map(|s| s.1.eval.total).unwrap_or(f32::NEG_INFINITY);
+            match target {
+                Some(t) if best < t && batch < MAX_TARGET_BATCHES => continue,
+                _ => break,
+            }
         }
-        scored.sort_by(|a, b| b.1.eval.total.partial_cmp(&a.1.eval.total).unwrap());
         if let Some((seed, r)) = scored.first() {
             let (seed, score) = (*seed, r.eval.total);
             if let Some(t) = Theme::from_melody(&r.key, &r.melody, r.meter) {
@@ -385,8 +399,13 @@ pub fn explore(file: &SuiteFile, seeds: u64, cfg: &Config, rules: &[Box<dyn Rule
             let label = if sec.name.is_empty() { format!("{}", i + 1) } else { sec.name.clone() };
             let worst = scored.last().map(|s| s.1.eval.total).unwrap_or(score);
             let top: Vec<String> = scored.iter().take(3).map(|(s, r)| format!("{s}={:.1}", r.eval.total)).collect();
+            let reached = match target {
+                Some(t) if score < t => format!("; target {t:.1} NOT reached"),
+                Some(t) => format!("; target {t:.1} reached"),
+                None => String::new(),
+            };
             log.push(format!(
-                "section {label}: {} seeds, best seed {seed} score {score:.2} (worst {worst:.2}; top {})",
+                "section {label}: {} seeds, best seed {seed} score {score:.2} (worst {worst:.2}; top {}{reached})",
                 scored.len(),
                 top.join(", ")
             ));
