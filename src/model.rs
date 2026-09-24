@@ -54,6 +54,9 @@ pub enum Style {
     /// re-struck as the tension rises, pedal on the root with the fifth
     /// on the weak strong beat and a walk to the next root at phrase ends.
     Organ,
+    /// Boom bap: 90s hip-hop drums (kick, snare on 2 and 4, 8th hi-hats),
+    /// deep bass on the kicks, electric-piano chord stabs, a string pad.
+    BoomBap,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

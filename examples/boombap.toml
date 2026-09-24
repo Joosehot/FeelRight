@@ -1,0 +1,89 @@
+# 90s East Coast boom bap. F minor, 92 BPM. Drums, deep bass on the
+# kicks, Rhodes stabs, a string sample. The melody is the hook (flute)
+# and, in the verses, a sparse sample line that leaves room for the rap.
+# Intro, verse, hook, verse, hook out.
+
+name = "Boom bap"
+
+[[section]]
+name = "A intro"
+chords = "Fm Db Eb Cm | Fm Db Eb Eb"
+key = "F:minor"
+tempo = 92
+bars = 8
+seed = 5
+instrument = "flute"
+octave = 1
+style = "boom-bap"
+form = "period"
+tension = [0.3, 0.35, 0.4, 0.45, 0.4, 0.45, 0.5, 0.55]
+ends_open = true
+refine = 40
+rules_override = { syncopation = { threshold = 0.3, weight = 2.5 }, repetition_with_variation = { exact_again = 0.5 }, monotone = { max_repeats = 6 }, nct_types = { anticipation = 0.6, escape = 0.4 }, breathing = { weight = 2.0, min_dur = 4, sub_min_dur = 2 }, surprise = { min_bits = 2.0, max_bits = 3.6 } }
+
+[[section]]
+name = "B verse 1"
+chords = "Fm Db Eb Cm | Fm Db Eb Eb | Fm Db Eb Cm | Fm Db Eb Eb"
+key = "F:minor"
+tempo = 92
+bars = 16
+seed = 9
+instrument = "vibraphone"
+octave = 0
+style = "boom-bap"
+form = "aaba"
+tension = [0.35, 0.4, 0.4, 0.45, 0.4, 0.45, 0.5, 0.5, 0.4, 0.45, 0.55, 0.6, 0.5, 0.45, 0.5, 0.6]
+ends_open = true
+theme_from = "A intro"
+refine = 60
+rules_override = { syncopation = { threshold = 0.3, weight = 2.5 }, repetition_with_variation = { exact_again = 0.5 }, monotone = { max_repeats = 6 }, density = { weight = 0.5 }, breathing = { weight = 4.0, min_dur = 8, sub_min_dur = 4 }, nct_types = { anticipation = 0.6, escape = 0.4 }, surprise = { min_bits = 2.0, max_bits = 3.4 } }
+
+[[section]]
+name = "C hook"
+chords = "Fm Db Eb Cm | Fm Db Eb Eb"
+key = "F:minor"
+tempo = 92
+bars = 8
+seed = 5
+instrument = "flute"
+octave = 1
+style = "boom-bap"
+form = "period"
+tension = [0.6, 0.65, 0.7, 0.75, 0.7, 0.75, 0.8, 0.7]
+ends_open = true
+theme_from = "A intro"
+refine = 40
+rules_override = { syncopation = { threshold = 0.3, weight = 2.5 }, repetition_with_variation = { exact_again = 0.5 }, monotone = { max_repeats = 6 }, nct_types = { anticipation = 0.6, escape = 0.4 }, breathing = { weight = 2.0, min_dur = 4, sub_min_dur = 2 }, surprise = { min_bits = 2.0, max_bits = 3.6 } }
+
+[[section]]
+name = "D verse 2"
+chords = "Fm Db Eb Cm | Fm Db Eb Eb | Fm Db Eb Cm | Fm Db Eb Eb"
+key = "F:minor"
+tempo = 92
+bars = 16
+seed = 13
+instrument = "vibraphone"
+octave = 0
+style = "boom-bap"
+form = "aaba"
+tension = [0.45, 0.5, 0.5, 0.55, 0.5, 0.55, 0.6, 0.6, 0.5, 0.55, 0.65, 0.7, 0.6, 0.55, 0.6, 0.7]
+ends_open = true
+theme_from = "A intro"
+refine = 60
+rules_override = { syncopation = { threshold = 0.3, weight = 2.5 }, repetition_with_variation = { exact_again = 0.5 }, monotone = { max_repeats = 6 }, density = { weight = 0.5 }, breathing = { weight = 4.0, min_dur = 8, sub_min_dur = 4 }, nct_types = { anticipation = 0.6, escape = 0.4 }, surprise = { min_bits = 2.0, max_bits = 3.4 } }
+
+[[section]]
+name = "E hook out"
+chords = "Fm Db Eb Cm | Fm Db Eb Fm"
+key = "F:minor"
+tempo = 92
+bars = 8
+seed = 5
+instrument = "flute"
+octave = 1
+style = "boom-bap"
+form = "period"
+tension = [0.7, 0.75, 0.8, 0.85, 0.8, 0.75, 0.5, 0.2]
+theme_from = "A intro"
+refine = 40
+rules_override = { syncopation = { threshold = 0.3, weight = 2.5 }, repetition_with_variation = { exact_again = 0.5 }, monotone = { max_repeats = 6 }, nct_types = { anticipation = 0.6, escape = 0.4 }, breathing = { weight = 2.0, min_dur = 4, sub_min_dur = 2 }, surprise = { min_bits = 2.0, max_bits = 3.6 }, final_note = { weight = 6.0 } }

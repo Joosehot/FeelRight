@@ -86,7 +86,7 @@ const ENDINGS_34: &[&[u32]] = &[&[12], &[4, 8], &[8, 4], &[6, 6], &[2, 2, 8]];
 fn patterns(style: Style) -> (&'static [&'static [u32]], &'static [&'static [u32]]) {
     match style {
         Style::Classical | Style::Orchestral | Style::Brass | Style::Concerto | Style::Waltz | Style::Rapids | Style::Baroque | Style::Western | Style::Organ => (CLASSICAL_PATTERNS_44, CLASSICAL_ENDINGS_44),
-        Style::Pop | Style::Jazz | Style::Circus | Style::Tango => (POP_PATTERNS_44, POP_ENDINGS_44),
+        Style::Pop | Style::Jazz | Style::Circus | Style::Tango | Style::BoomBap => (POP_PATTERNS_44, POP_ENDINGS_44),
     }
 }
 

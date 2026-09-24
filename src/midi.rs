@@ -238,6 +238,11 @@ const GM_NYLON_GUITAR: u8 = 24;
 const GM_BANDONEON: u8 = 23;
 const GM_STEEL_GUITAR: u8 = 25;
 const GM_CHURCH_ORGAN: u8 = 19;
+const GM_SYNTH_BASS: u8 = 38;
+const DRUM_KICK: u8 = 36;
+const DRUM_SNARE: u8 = 38;
+const DRUM_HIHAT_CLOSED: u8 = 42;
+const DRUM_HIHAT_OPEN: u8 = 46;
 const GM_GLOCKENSPIEL: u8 = 9;
 const CH_GLOCK: u8 = 12;
 const GM_TUBA: u8 = 58;
@@ -333,6 +338,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
             Style::Organ => ("left hand", "pedal", "inner voice"),
             Style::Classical | Style::Rapids | Style::Baroque | Style::Waltz | Style::Concerto => ("left hand", "bass", "strings"),
             Style::Jazz => ("comping", "walking bass", "drums"),
+            Style::BoomBap => ("rhodes", "bass", "strings"),
             Style::Brass => ("brass section", "tuba", "timpani"),
             Style::Western => ("guitar", "bass", "low strings"),
             Style::Circus => ("accordion", "tuba", "woodblocks"),
@@ -347,7 +353,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
         let pending_bass = format!("{} - {bass_label}", sec.name);
         let pending_layer = format!("{} - {layer_label}", sec.name);
         let pending_glock = format!("{} - glockenspiel", sec.name);
-        let pending_drums = format!("{} - hoofbeats", sec.name);
+        let pending_drums = format!("{} - {}", sec.name, if sec.style == Style::BoomBap { "drums" } else { "hoofbeats" });
 
         // Accompaniment.
         let (chord_prog, bass_prog, layer_prog) = match sec.style {
@@ -362,6 +368,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
             Style::Tango => (GM_BANDONEON, GM_CONTRABASS, GM_STRINGS),
             Style::Western => (GM_STEEL_GUITAR, GM_CONTRABASS, GM_STRINGS),
             Style::Organ => (GM_CHURCH_ORGAN, GM_CHURCH_ORGAN, GM_CHURCH_ORGAN),
+            Style::BoomBap => (GM_EPIANO, GM_SYNTH_BASS, GM_STRINGS),
             _ => (0, 0, 0),
         };
         let (chord_prog, bass_prog) = match sec.acc_program {
@@ -478,6 +485,69 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
                             t += spbeat;
                         }
                     }
+                }
+                Style::BoomBap => {
+                    // Drum pattern per bar (16 steps), two variants that
+                    // alternate so the loop breathes:
+                    //   kick   0, 7, 10        / 0, 6, 10, 15
+                    //   snare  4, 12           (backbeat, with a ghost at 11 when tense)
+                    //   hats   every 8th, open hat on the "and" of 4
+                    // Bass: root on the kicks, an octave below the chord.
+                    // Rhodes: stab on 1 and on the "and" of 3, held pad when calm.
+                    // Strings: quiet pad from tension 0.5.
+                    let v = voice_lead(span, prev_voicing.as_deref(), 55, 67);
+                    let end = span.start + span.len;
+                    let mut t = span.start;
+                    while t < end {
+                        let bar_start = t - t % spb;
+                        let variant = ((bar_start / spb) % 2) as usize;
+                        let kicks: &[u32] = if variant == 0 { &[0, 7, 10] } else { &[0, 6, 10, 15] };
+                        let bar_end = (bar_start + spb).min(end);
+                        for k in 0..spb {
+                            let st = bar_start + k;
+                            if st < t || st >= bar_end {
+                                continue;
+                            }
+                            if kicks.contains(&k) {
+                                note_pair(&mut layer_drums, CH_DRUMS, DRUM_KICK, 110, off + st, 1);
+                                note_pair(&mut bass, CH_BASS, root.saturating_sub(12).max(28), (80.0 + 30.0 * e) as u8, off + st, 3);
+                            }
+                            if k == 4 || k == 12 {
+                                note_pair(&mut layer_drums, CH_DRUMS, DRUM_SNARE, 104, off + st, 1);
+                            }
+                            if k == 11 && e >= 0.6 {
+                                note_pair(&mut layer_drums, CH_DRUMS, DRUM_SNARE, 46, off + st, 1);
+                            }
+                            if k % 2 == 0 {
+                                let hat = if k == 14 { DRUM_HIHAT_OPEN } else { DRUM_HIHAT_CLOSED };
+                                note_pair(&mut layer_drums, CH_DRUMS, hat, if k % 4 == 0 { 70 } else { 52 }, off + st, 1);
+                            }
+                        }
+                        // Rhodes stabs.
+                        let vel = (48.0 + 36.0 * e).round() as u8;
+                        if e < 0.35 {
+                            for p in v.iter().skip(1) {
+                                note_pair(&mut chd, CH_CHORDS, *p, vel, off + bar_start.max(t), bar_end - bar_start.max(t));
+                            }
+                        } else {
+                            for at in [0u32, 10] {
+                                let st = bar_start + at;
+                                if st >= t && st < bar_end {
+                                    for p in v.iter().skip(1) {
+                                        note_pair(&mut chd, CH_CHORDS, *p, vel, off + st, 3);
+                                    }
+                                }
+                            }
+                        }
+                        t = bar_end;
+                    }
+                    if e >= 0.5 {
+                        let svel = (24.0 + 36.0 * e).round() as u8;
+                        for p in v.iter().skip(1) {
+                            note_pair(&mut layer, CH_LAYER, p + 12, svel, off + span.start, span.len);
+                        }
+                    }
+                    prev_voicing = Some(v);
                 }
                 Style::Organ => {
                     // Left hand (manual II): voice-led chord in the small
