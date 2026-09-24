@@ -1,0 +1,55 @@
+# A comic swing blues in F. Muted trumpet mumbles the head, clarinet
+# squeaks it back an octave up, vibraphone tiptoes the last chorus.
+# Fast walking bass, Charleston comping, ride. Leaps and surprises are
+# rewarded, syncopation from the very first bar.
+
+name = "Hauska jazz"
+
+[[section]]
+name = "A sordiinotrumpetti"
+chords = "F7 Bb7 F7 F7 | Bb7 Bb7 F7 D7 | Gm7 C7 F7 D7 | Gm7 C7 F7 C7"
+key = "F:major"
+tempo = 176
+bars = 16
+seed = 8
+instrument = "muted_trumpet"
+octave = 0
+style = "jazz"
+form = "aaba"
+tension = [0.5, 0.6, 0.6, 0.7, 0.6, 0.7, 0.8, 0.7, 0.6, 0.7, 0.9, 1.0, 0.8, 0.7, 0.6, 0.7]
+ends_open = true
+refine = 40
+rules_override = { syncopation = { threshold = 0.3, weight = 2.5 }, surprise = { min_bits = 3.0, max_bits = 4.6 }, max_leap = { soft_max = 12, weight = 0.5 }, mostly_steps = { min_ratio = 0.35, max_ratio = 0.6 }, gap_fill = { weight = 0.5 }, nct_types = { anticipation = 0.6, escape = 0.5 }, guide_tones = { weight = 2.0 }, monotone = { max_repeats = 5 } }
+
+[[section]]
+name = "B klarinetti"
+chords = "Bb7 Eb7 Bb7 Bb7 | Eb7 Eb7 Bb7 G7 | Cm7 F7 Bb7 G7 | Cm7 F7 Bb7 C7"
+key = "Bb:major"
+tempo = 176
+bars = 16
+seed = 5
+instrument = "clarinet"
+octave = 1
+style = "jazz"
+form = "aaba"
+tension = [0.5, 0.6, 0.6, 0.7, 0.6, 0.7, 0.8, 0.7, 0.6, 0.7, 0.9, 1.0, 0.8, 0.7, 0.7, 0.8]
+ends_open = true
+theme_from = "A sordiinotrumpetti"
+refine = 40
+rules_override = { syncopation = { threshold = 0.3, weight = 2.5 }, surprise = { min_bits = 3.0, max_bits = 4.6 }, max_leap = { soft_max = 12, weight = 0.5 }, mostly_steps = { min_ratio = 0.35, max_ratio = 0.6 }, gap_fill = { weight = 0.5 }, nct_types = { anticipation = 0.6, escape = 0.5 }, guide_tones = { weight = 2.0 }, monotone = { max_repeats = 5 } }
+
+[[section]]
+name = "C vibrafoni"
+chords = "F7 Bb7 F7 F7 | Bb7 Bb7 F7 D7 | Gm7 C7 F7 D7 | Gm7 C7 F7 F7"
+key = "F:major"
+tempo = 184
+bars = 16
+seed = 8
+instrument = "vibraphone"
+octave = 1
+style = "jazz"
+form = "aaba"
+tension = [0.6, 0.7, 0.7, 0.8, 0.7, 0.8, 0.9, 0.9, 0.7, 0.8, 1.0, 1.0, 0.9, 0.7, 0.5, 0.2]
+theme_from = "A sordiinotrumpetti"
+refine = 40
+rules_override = { syncopation = { threshold = 0.3, weight = 2.5 }, surprise = { min_bits = 3.0, max_bits = 4.6 }, max_leap = { soft_max = 12, weight = 0.5 }, mostly_steps = { min_ratio = 0.35, max_ratio = 0.6 }, gap_fill = { weight = 0.5 }, nct_types = { anticipation = 0.6, escape = 0.5 }, guide_tones = { weight = 2.0 }, monotone = { max_repeats = 5 } }
