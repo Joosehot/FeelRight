@@ -109,6 +109,8 @@ pub fn gm_program(name: &str) -> Result<u8> {
         "harpsichord" => 6,
         "organ" | "church_organ" => 19,
         "harp" => 46,
+        "music_box" => 10,
+        "celesta" => 8,
         "harmonica" => 22,
         "steel_guitar" => 25,
         "glockenspiel" => 9,
