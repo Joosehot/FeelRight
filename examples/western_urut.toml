@@ -1,0 +1,72 @@
+# Fast western organ piece. Church organ toccata in D minor at 132 BPM
+# over spaghetti-western changes, the organ riding a galloping guitar in
+# the middle, a short standoff, then the full organ with pedal and inner
+# voice to the end.
+
+name = "Lännen urut"
+
+[[section]]
+name = "A toccata"
+chords = "Dm Dm Bb A7 | Dm C Bb A7 | Dm F Gm A7 | Bb Gm A7 A7"
+key = "D:minor"
+tempo = 132
+bars = 16
+seed = 3
+instrument = "organ"
+octave = 0
+style = "organ"
+form = "aaba"
+tension = [0.75, 0.8, 0.8, 0.85, 0.8, 0.85, 0.9, 0.9, 0.8, 0.85, 0.95, 1.0, 0.9, 0.85, 0.85, 0.9]
+ends_open = true
+refine = 60
+rules_override = { density = { weight = 3.0 }, syncopation = { threshold = 0.6, weight = 2.0 }, max_leap = { soft_max = 12 }, single_climax = { weight = 4.0, min_height = 10 }, mostly_steps = { min_ratio = 0.45 }, surprise = { min_bits = 2.6, max_bits = 4.0 }, breathing = { weight = 1.5, min_dur = 4, sub_min_dur = 2 }, sequence = { weight = 3.0 } }
+
+[[section]]
+name = "B laukka"
+chords = "F C Dm Bb | F C Bb C | Dm Bb F C | Gm Bb A7 A7"
+key = "F:major"
+tempo = 132
+bars = 16
+seed = 8
+instrument = "organ"
+octave = 1
+style = "western"
+form = "aaba"
+tension = [0.75, 0.8, 0.8, 0.85, 0.8, 0.85, 0.9, 0.9, 0.8, 0.85, 0.95, 1.0, 0.9, 0.85, 0.85, 0.9]
+ends_open = true
+theme_from = "A toccata"
+refine = 60
+rules_override = { density = { weight = 2.5 }, syncopation = { threshold = 0.6, weight = 2.0 }, max_leap = { soft_max = 12 }, single_climax = { weight = 4.0, min_height = 10 }, mostly_steps = { min_ratio = 0.45 }, surprise = { min_bits = 2.6, max_bits = 4.0 }, breathing = { weight = 1.5, min_dur = 4, sub_min_dur = 2 } }
+
+[[section]]
+name = "C vastakkain"
+chords = "Dm Dm A7 A7"
+key = "D:minor"
+tempo = 92
+bars = 4
+seed = 2
+instrument = "organ"
+octave = 0
+style = "organ"
+form = "period"
+tension = [0.35, 0.3, 0.4, 0.6]
+ends_open = true
+theme_from = "A toccata"
+refine = 30
+rules_override = { density = { weight = 0.0 }, breathing = { weight = 5.0, min_dur = 8, sub_min_dur = 8 }, delayed_resolution = { weight = 3.0, high_threshold = 0.4 } }
+
+[[section]]
+name = "D täydet urut"
+chords = "Dm Dm Bb A7 | Dm C Bb A7 | Dm F Gm A7 | Bb A7 Dm Dm"
+key = "D:minor"
+tempo = 140
+bars = 16
+seed = 3
+instrument = "organ"
+octave = 0
+style = "organ"
+form = "aaba"
+tension = [0.85, 0.9, 0.9, 0.95, 0.9, 0.95, 1.0, 1.0, 0.9, 0.95, 1.0, 1.0, 0.95, 0.9, 0.6, 0.3]
+theme_from = "A toccata"
+refine = 60
+rules_override = { density = { weight = 3.0 }, syncopation = { threshold = 0.6, weight = 2.0 }, max_leap = { soft_max = 12 }, single_climax = { weight = 4.0, min_height = 12 }, mostly_steps = { min_ratio = 0.45 }, surprise = { min_bits = 2.6, max_bits = 4.0 }, breathing = { weight = 1.5, min_dur = 4, sub_min_dur = 2 }, sequence = { weight = 3.0 }, final_note = { weight = 6.0 } }
