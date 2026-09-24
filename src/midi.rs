@@ -640,30 +640,55 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
                     }
                 }
                 Style::Waltz => {
-                    // Bass note on beat 1, chord on the other beats, both
-                    // in the piano; strings hold the chord when tense.
+                    // Left hand: bass on 1, voice-led chord on 2 and 3.
+                    // Figures vary by bar so the waltz breathes:
+                    //   0  oom-pah-pah
+                    //   1  oom-pah-(rest)        lighter
+                    //   2  oom-pah-pah with the chord rolled on 2
+                    //   3  oom, then bass walks on 3 toward the next root
+                    // Phrase-final bars hold; strings join when tense.
+                    let v = voice_lead(span, prev_voicing.as_deref(), 52, 64);
                     let spbeat = sec.meter.steps_per_beat();
                     let end = span.start + span.len;
+                    let vel = (44.0 + 40.0 * e).round() as u8;
+                    let figure = if phrase_end_bar { 9 } else { bar % 4 };
+                    let next = chords_after(sec.chords, span).map(|c| 36 + c.root.0);
                     let mut t = span.start;
-                    let vel = (46.0 + 40.0 * e).round() as u8;
                     while t < end {
                         let pos = t % spb;
-                        if pos == 0 {
+                        let beat = pos / spbeat;
+                        if beat == 0 {
                             note_pair(&mut chd, CH_CHORDS, root, vel + 10, off + t, spbeat);
-                            note_pair(&mut bass, CH_BASS, root, bvel, off + t, (spb).min(end - t));
+                            let blen = if figure == 9 { spb.min(end - t) } else { spbeat };
+                            note_pair(&mut bass, CH_BASS, root, bvel, off + t, blen);
+                        } else if figure == 9 {
+                            if beat == 1 {
+                                for p in &v {
+                                    note_pair(&mut chd, CH_CHORDS, *p, vel.saturating_sub(4), off + t, (2 * spbeat).min(end - t));
+                                }
+                            }
+                        } else if figure == 1 && beat == 2 {
+                            // rest on 3
+                        } else if figure == 3 && beat == 2 {
+                            let target = next.unwrap_or(root);
+                            let step = if target > root { root + 7 } else if target < root { root.saturating_sub(5) } else { root + 7 };
+                            note_pair(&mut bass, CH_BASS, step, bvel.saturating_sub(6), off + t, spbeat / 2);
                         } else {
-                            for p in chord_voicing(span) {
-                                note_pair(&mut chd, CH_CHORDS, p + 12, vel.saturating_sub(6), off + t, spbeat / 2);
+                            let roll = figure == 2 && beat == 1;
+                            for (k, p) in v.iter().enumerate() {
+                                let delay = if roll { k as u32 } else { 0 };
+                                note_pair(&mut chd, CH_CHORDS, *p, vel.saturating_sub(6), off + t + delay, (spbeat / 2).saturating_sub(delay).max(1));
                             }
                         }
                         t += spbeat;
                     }
-                    if e >= 0.4 {
-                        let svel = (30.0 + 40.0 * e).round() as u8;
-                        for p in chord_voicing(span) {
+                    if e >= 0.45 {
+                        let svel = (28.0 + 40.0 * e).round() as u8;
+                        for p in &v {
                             note_pair(&mut layer, CH_LAYER, p + 12, svel, off + span.start, span.len);
                         }
                     }
+                    prev_voicing = Some(v);
                 }
                 Style::Concerto => {
                     // Piano: full chord in two octaves on strong beats, a

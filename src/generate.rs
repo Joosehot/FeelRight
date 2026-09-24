@@ -61,6 +61,28 @@ const CLASSICAL_PATTERNS_44: &[&[u32]] = &[
 /// into the next phrase.
 const CLASSICAL_ENDINGS_44: &[&[u32]] = &[&[8, 8], &[4, 12], &[12, 4], &[6, 2, 8], &[8, 4, 4]];
 
+/// 3/4 patterns (12 steps): waltz and minuet figures with pickups.
+const PATTERNS_34: &[&[u32]] = &[
+    &[4, 4, 4],
+    &[8, 4],
+    &[4, 8],
+    &[6, 2, 4],
+    &[4, 6, 2],
+    &[2, 2, 4, 4],
+    &[4, 2, 2, 4],
+    &[4, 4, 2, 2],
+    &[2, 2, 2, 2, 4],
+    &[6, 6],
+    &[8, 2, 2],
+    &[3, 1, 4, 4],
+    &[4, 3, 1, 4],
+    &[2, 2, 2, 2, 2, 2],
+    &[4, 2, 2, 2, 2],
+];
+
+/// 3/4 phrase endings: a long note, or long plus a pickup.
+const ENDINGS_34: &[&[u32]] = &[&[12], &[4, 8], &[8, 4], &[6, 6], &[2, 2, 8]];
+
 fn patterns(style: Style) -> (&'static [&'static [u32]], &'static [&'static [u32]]) {
     match style {
         Style::Classical | Style::Orchestral | Style::Brass | Style::Concerto | Style::Waltz | Style::Rapids | Style::Baroque => (CLASSICAL_PATTERNS_44, CLASSICAL_ENDINGS_44),
@@ -92,18 +114,22 @@ fn random_rhythm(rng: &mut ChaCha8Rng, steps: u32, ending: bool) -> Vec<u32> {
 /// motif with one bar swapped for variation. Every 4th bar and the last bar
 /// end with a long note.
 pub fn plan_rhythm(rng: &mut ChaCha8Rng, meter: Meter, bars: u32, style: Style) -> Vec<Vec<u32>> {
-    let (pats, ends) = patterns(style);
     let spb = meter.steps_per_bar();
-    let is_44 = meter.num == 4 && meter.den == 4;
+    let (pats, ends): (&[&[u32]], &[&[u32]]) = match (meter.num, meter.den) {
+        (4, 4) => patterns(style),
+        (3, 4) => (PATTERNS_34, ENDINGS_34),
+        _ => (&[], &[]),
+    };
+    let has_lib = !pats.is_empty();
     let pick = |rng: &mut ChaCha8Rng| -> Vec<u32> {
-        if is_44 {
+        if has_lib {
             pats.choose(rng).unwrap().to_vec()
         } else {
             random_rhythm(rng, spb, false)
         }
     };
     let pick_end = |rng: &mut ChaCha8Rng| -> Vec<u32> {
-        if is_44 {
+        if has_lib {
             ends.choose(rng).unwrap().to_vec()
         } else {
             random_rhythm(rng, spb, true)
@@ -219,8 +245,15 @@ mod tests {
         assert_ne!(plan[0], plan[1]);
         assert_eq!(plan[7], vec![16]);
         assert!(plan[3].iter().any(&|&d| d >= 8));
-        // Other meters still tile the bar.
+        // 3/4 has its own library; other meters still tile the bar.
+        for p in PATTERNS_34.iter().chain(ENDINGS_34) {
+            assert_eq!(p.iter().sum::<u32>(), 12, "{p:?}");
+        }
         let meter = Meter { num: 3, den: 4 };
+        for bar in plan_rhythm(&mut rng(7), meter, 8, Style::Waltz) {
+            assert_eq!(bar.iter().sum::<u32>(), 12);
+        }
+        let meter = Meter { num: 6, den: 8 };
         for bar in plan_rhythm(&mut rng(7), meter, 8, Style::Pop) {
             assert_eq!(bar.iter().sum::<u32>(), 12);
         }

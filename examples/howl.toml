@@ -1,5 +1,7 @@
-# Fast minor-key waltz in the spirit of "Merry-Go-Round of Life":
-# piano leads, strings answer, the waltz returns bigger.
+# Fast minor-key waltz in the spirit of "Merry-Go-Round of Life". Piano
+# leads, strings answer in the relative major, the waltz returns bigger.
+# Now with a real 3/4 rhythm library, a livelier left hand, bridges and a
+# shared theme.
 
 name = "Karusellivalssi ABC"
 
@@ -15,7 +17,11 @@ instrument = "piano"
 octave = 1
 style = "waltz"
 form = "period"
-tension = [0.3, 0.4, 0.4, 0.5, 0.4, 0.5, 0.6, 0.6, 0.5, 0.6, 0.8, 0.9, 0.7, 0.6, 0.4, 0.3]
+tension = [0.3, 0.4, 0.4, 0.5, 0.4, 0.5, 0.6, 0.6, 0.5, 0.6, 0.8, 0.9, 0.7, 0.6, 0.5, 0.6]
+ends_open = true
+bridge = 1
+refine = 60
+rules_override = { syncopation = { threshold = 0.5 }, nct_types = { appoggiatura = 0.8, tension_bonus = 1.0 }, surprise = { min_bits = 2.6, max_bits = 4.0 }, max_leap = { soft_max = 12 } }
 
 [[section]]
 name = "B strings"
@@ -30,6 +36,11 @@ octave = 1
 style = "waltz"
 form = "sentence"
 tension = [0.3, 0.4, 0.5, 0.5, 0.4, 0.5, 0.6, 0.7, 0.6, 0.7, 0.9, 1.0, 0.8, 0.7, 0.6, 0.7]
+ends_open = true
+bridge = 1
+theme_from = "A waltz"
+refine = 60
+rules_override = { syncopation = { threshold = 0.5 }, nct_types = { appoggiatura = 0.8, tension_bonus = 1.0 }, surprise = { min_bits = 2.6, max_bits = 4.0 }, max_leap = { soft_max = 12 } }
 
 [[section]]
 name = "C return"
@@ -44,3 +55,6 @@ octave = 1
 style = "waltz"
 form = "period"
 tension = [0.5, 0.6, 0.6, 0.7, 0.6, 0.7, 0.8, 0.8, 0.7, 0.8, 1.0, 1.0, 0.8, 0.6, 0.4, 0.1]
+theme_from = "A waltz"
+refine = 60
+rules_override = { syncopation = { threshold = 0.5 }, nct_types = { appoggiatura = 0.8, tension_bonus = 1.0 }, surprise = { min_bits = 2.6, max_bits = 4.0 }, max_leap = { soft_max = 12 } }
