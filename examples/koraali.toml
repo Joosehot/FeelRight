@@ -1,0 +1,75 @@
+# Chorale and variations in Bach's chorale idiom. The chorale itself is
+# engine-made (four phrases of even quarters, a fermata at every phrase
+# end, organ over held chords), followed by three baroque variations on
+# its opening motif: harpsichord figuration, running piano figuration,
+# and the chorale returning with brass.
+
+name = "Koraali ja variaatiot"
+
+[[section]]
+name = "A koraali"
+chords = "G D Em C | G D C D | Em Bm C G | C G D G"
+key = "G:major"
+tempo = 66
+bars = 16
+seed = 14
+instrument = "organ"
+octave = 0
+style = "pop"
+form = "period"
+tension = [0.3, 0.35, 0.4, 0.3, 0.35, 0.4, 0.5, 0.4, 0.4, 0.45, 0.55, 0.6, 0.5, 0.45, 0.4, 0.3]
+ends_open = true
+refine = 60
+# Chorale idiom: even values, no syncopation, stepwise, long notes at
+# phrase ends, chord tones on every strong beat, no surprises.
+rules_override = { rhythmic_variety = { weight = 0.0 }, density = { weight = 0.0 }, syncopation = { weight = 4.0, threshold = 0.99 }, mostly_steps = { min_ratio = 0.7, max_ratio = 0.95 }, breathing = { weight = 4.0, min_dur = 8, sub_min_dur = 8 }, chord_tones_on_strong_beats = { weight = 5.0, breakable = false }, surprise = { min_bits = 1.6, max_bits = 2.8 }, max_leap = { soft_max = 7 }, long_notes_on_strong_beats = { weight = 3.0 } }
+
+[[section]]
+name = "B variaatio cembalo"
+chords = "G D Em C | G D C D | Em Bm C G | C G D D7"
+key = "G:major"
+tempo = 88
+bars = 16
+seed = 5
+instrument = "harpsichord"
+octave = 1
+style = "baroque"
+form = "period"
+tension = [0.4, 0.45, 0.5, 0.45, 0.5, 0.55, 0.65, 0.6, 0.55, 0.6, 0.7, 0.8, 0.7, 0.6, 0.6, 0.7]
+ends_open = true
+theme_from = "A koraali"
+refine = 60
+rules_override = { sequence = { weight = 3.0 }, density = { weight = 2.5 }, syncopation = { weight = 3.0, threshold = 0.95 }, rhythmic_variety = { weight = 0.5 }, mostly_steps = { min_ratio = 0.6, max_ratio = 0.85 }, surprise = { min_bits = 2.0, max_bits = 3.2 } }
+
+[[section]]
+name = "C variaatio juoksutus"
+chords = "Em Bm C G | Am Em B7 Em | Em Bm C G | Am B7 Em D7"
+key = "E:minor"
+tempo = 104
+bars = 16
+seed = 9
+instrument = "piano"
+octave = 1
+style = "rapids"
+form = "sentence"
+tension = [0.5, 0.55, 0.6, 0.65, 0.6, 0.65, 0.75, 0.75, 0.65, 0.7, 0.85, 0.95, 0.85, 0.7, 0.6, 0.7]
+ends_open = true
+theme_from = "A koraali"
+refine = 60
+rules_override = { sequence = { weight = 3.0 }, density = { weight = 3.0 }, syncopation = { weight = 3.0, threshold = 0.95 }, rhythmic_variety = { weight = 0.5 }, mostly_steps = { min_ratio = 0.55, max_ratio = 0.85 }, surprise = { min_bits = 2.0, max_bits = 3.4 } }
+
+[[section]]
+name = "D koraali vaskilla"
+chords = "G D Em C | G D C D | Em Bm C G | C D G G"
+key = "G:major"
+tempo = 60
+bars = 16
+seed = 14
+instrument = "brass"
+octave = 0
+style = "orchestral"
+form = "period"
+tension = [0.5, 0.55, 0.6, 0.5, 0.55, 0.6, 0.7, 0.6, 0.6, 0.65, 0.8, 0.9, 0.7, 0.5, 0.3, 0.1]
+theme_from = "A koraali"
+refine = 60
+rules_override = { rhythmic_variety = { weight = 0.0 }, density = { weight = 0.0 }, syncopation = { weight = 4.0, threshold = 0.99 }, mostly_steps = { min_ratio = 0.7, max_ratio = 0.95 }, breathing = { weight = 4.0, min_dur = 8, sub_min_dur = 8 }, chord_tones_on_strong_beats = { weight = 5.0, breakable = false }, surprise = { min_bits = 1.6, max_bits = 2.8 }, max_leap = { soft_max = 7 }, long_notes_on_strong_beats = { weight = 3.0 } }

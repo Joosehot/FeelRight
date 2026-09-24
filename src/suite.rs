@@ -103,6 +103,7 @@ pub fn gm_program(name: &str) -> Result<u8> {
     Ok(match n.as_str() {
         "piano" => 0,
         "harpsichord" => 6,
+        "organ" | "church_organ" => 19,
         "guitar" => 24,
         "violin" => 40,
         "viola" => 41,
