@@ -203,6 +203,8 @@ fn alberti_on(v: &[u8], start: u32, len: u32, step: u32) -> Vec<(u32, u8)> {
 
 /// One section of a piece, rendered at `offset` grid steps.
 pub struct Section<'a> {
+    /// Section name, used for MIDI track names.
+    pub name: &'a str,
     pub melody: &'a Melody,
     pub chords: &'a [ChordSpan],
     pub meter: Meter,
@@ -241,6 +243,14 @@ const CH_GLOCK: u8 = 12;
 const GM_TUBA: u8 = 58;
 const GM_TIMPANI: u8 = 47;
 
+fn track_name(name: &str) -> AbsEvent {
+    AbsEvent {
+        tick: 0,
+        order: 0,
+        kind: TrackEventKind::Meta(MetaMessage::TrackName(Box::leak(name.to_string().into_boxed_str()).as_bytes())),
+    }
+}
+
 fn program_change(abs: &mut Vec<AbsEvent>, tick: u32, channel: u8, program: u8) {
     abs.push(AbsEvent {
         tick,
@@ -260,14 +270,16 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
     let mut smf = Smf::new(header);
 
     let mut cond = Vec::new();
-    let mut chd = Vec::new();
-    let mut bass = Vec::new();
-    let mut layer = Vec::new();
-    let mut glock = Vec::new();
-    let mut layer_drums = Vec::new();
-    let mut melody_tracks: Vec<Vec<AbsEvent>> = Vec::new();
+    // Every section gets its own named tracks so notation software shows
+    // each hand and each instrument as its own staff.
+    let mut section_tracks: Vec<(String, Vec<AbsEvent>)> = Vec::new();
 
     for (si, sec) in sections.iter().enumerate() {
+        let mut chd = Vec::new();
+        let mut bass = Vec::new();
+        let mut layer = Vec::new();
+        let mut glock = Vec::new();
+        let mut layer_drums = Vec::new();
         let off = sec.offset;
         let spb = sec.meter.steps_per_bar();
         let tick0 = off * TICKS_PER_STEP;
@@ -317,7 +329,25 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
             let pitch = (n.pitch as i32 + 12 * sec.octave).clamp(0, 127) as u8;
             note_pair_swing(&mut mel, ch, pitch, vel, off + n.start, dur, sec.style == Style::Jazz);
         }
-        melody_tracks.push(mel);
+        let (chords_label, bass_label, layer_label) = match sec.style {
+            Style::Organ => ("left hand", "pedal", "inner voice"),
+            Style::Classical | Style::Rapids | Style::Baroque | Style::Waltz | Style::Concerto => ("left hand", "bass", "strings"),
+            Style::Jazz => ("comping", "walking bass", "drums"),
+            Style::Brass => ("brass section", "tuba", "timpani"),
+            Style::Western => ("guitar", "bass", "low strings"),
+            Style::Circus => ("accordion", "tuba", "woodblocks"),
+            Style::Tango => ("bandoneon", "bass", "strings"),
+            _ => ("chords", "bass", "layer"),
+        };
+        let mel_name = format!("{} - melody", sec.name);
+        let mut mel = mel;
+        mel.insert(0, track_name(&mel_name));
+        section_tracks.push((mel_name, mel));
+        let pending_chd = format!("{} - {chords_label}", sec.name);
+        let pending_bass = format!("{} - {bass_label}", sec.name);
+        let pending_layer = format!("{} - {layer_label}", sec.name);
+        let pending_glock = format!("{} - glockenspiel", sec.name);
+        let pending_drums = format!("{} - hoofbeats", sec.name);
 
         // Accompaniment.
         let (chord_prog, bass_prog, layer_prog) = match sec.style {
@@ -889,20 +919,18 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
                 }
             }
         }
+        let has_notes = |v: &Vec<AbsEvent>| v.iter().any(|e| matches!(e.kind, TrackEventKind::Midi { message: MidiMessage::NoteOn { .. }, .. }));
+        for (name, mut t) in [(pending_chd, chd), (pending_bass, bass), (pending_layer, layer), (pending_glock, glock), (pending_drums, layer_drums)] {
+            if has_notes(&t) {
+                t.insert(0, track_name(&name));
+                section_tracks.push((name, t));
+            }
+        }
     }
 
     smf.tracks.push(to_track(cond));
-    for mel in melody_tracks {
-        smf.tracks.push(to_track(mel));
-    }
-    smf.tracks.push(to_track(chd));
-    smf.tracks.push(to_track(bass));
-    if sections.iter().any(|s| matches!(s.style, Style::Orchestral | Style::Brass | Style::Concerto | Style::Waltz | Style::Rapids | Style::Jazz | Style::Circus | Style::Tango | Style::Western | Style::Organ)) {
-        smf.tracks.push(to_track(layer));
-    }
-    if sections.iter().any(|s| s.style == Style::Western) {
-        smf.tracks.push(to_track(glock));
-        smf.tracks.push(to_track(layer_drums));
+    for (_, t) in section_tracks {
+        smf.tracks.push(to_track(t));
     }
 
     if let Some(parent) = path.parent() {
@@ -929,7 +957,7 @@ pub fn write_midi(
 ) -> Result<()> {
     write_suite(
         path,
-        &[Section { melody, chords, meter, tempo_bpm, style, energy, program, octave, phrase_ends, offset: 0, acc_program: None }],
+        &[Section { name: "melody", melody, chords, meter, tempo_bpm, style, energy, program, octave, phrase_ends, offset: 0, acc_program: None }],
     )
 }
 

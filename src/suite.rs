@@ -151,6 +151,7 @@ pub fn gm_program(name: &str) -> Result<u8> {
 }
 
 pub struct Rendered {
+    pub name: String,
     pub key: Key,
     pub melody: Melody,
     pub chords: Vec<ChordSpan>,
@@ -256,6 +257,7 @@ pub fn render_section(sec: &SuiteSection, nb: &Neighbours, base_cfg: &Config, ru
         (melody, eval, vec![])
     };
     Ok(Rendered {
+        name: sec.name.clone(),
         key,
         melody,
         chords: spans,
@@ -309,6 +311,7 @@ pub fn render(file: &SuiteFile, out: &Path, cfg: &Config, rules: &[Box<dyn Rule>
     let mut sections = Vec::new();
     for r in &rendered {
         sections.push(midi::Section {
+            name: &r.name,
             melody: &r.melody,
             chords: &r.chords,
             meter: r.meter,
