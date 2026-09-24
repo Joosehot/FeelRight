@@ -1,0 +1,73 @@
+# Western chase at 130 BPM. Galloping guitar with hoofbeats, contrabass
+# on the beats, trumpet leading like a Morricone cue; harmonica takes the
+# middle over the same gallop in the relative major; a short ambush
+# where everything stops; then the chase again, faster, until the
+# riders pull up at the end.
+
+name = "Ajojahti"
+
+[[section]]
+name = "A laukka"
+chords = "Dm Dm Bb A7 | Dm C Bb A7 | Dm F Gm A7 | Bb Gm A7 A7"
+key = "D:minor"
+tempo = 130
+bars = 16
+seed = 7
+instrument = "trumpet"
+octave = 0
+style = "western"
+form = "aaba"
+tension = [0.75, 0.75, 0.8, 0.8, 0.75, 0.8, 0.85, 0.9, 0.75, 0.8, 0.9, 1.0, 0.9, 0.85, 0.85, 0.9]
+ends_open = true
+refine = 60
+rules_override = { density = { weight = 2.5 }, syncopation = { threshold = 0.6, weight = 2.0 }, max_leap = { soft_max = 12 }, single_climax = { weight = 4.0, min_height = 10 }, mostly_steps = { min_ratio = 0.45 }, surprise = { min_bits = 2.6, max_bits = 4.0 }, breathing = { weight = 1.5, min_dur = 4, sub_min_dur = 2 } }
+
+[[section]]
+name = "B huuliharppu"
+chords = "F C Dm Bb | F C Bb C | Dm Bb F C | Gm Bb A7 A7"
+key = "F:major"
+tempo = 130
+bars = 16
+seed = 3
+instrument = "harmonica"
+octave = 0
+style = "western"
+form = "aaba"
+tension = [0.7, 0.75, 0.75, 0.8, 0.75, 0.8, 0.85, 0.85, 0.75, 0.8, 0.9, 0.95, 0.85, 0.8, 0.85, 0.9]
+ends_open = true
+theme_from = "A laukka"
+refine = 60
+rules_override = { density = { weight = 2.5 }, syncopation = { threshold = 0.6, weight = 2.0 }, max_leap = { soft_max = 12 }, single_climax = { weight = 4.0, min_height = 10 }, mostly_steps = { min_ratio = 0.45 }, surprise = { min_bits = 2.6, max_bits = 4.0 }, breathing = { weight = 1.5, min_dur = 4, sub_min_dur = 2 } }
+
+[[section]]
+name = "C väijytys"
+chords = "Dm Dm A7 A7"
+key = "D:minor"
+tempo = 96
+bars = 4
+seed = 2
+instrument = "harmonica"
+octave = 0
+style = "western"
+form = "period"
+tension = [0.3, 0.25, 0.35, 0.55]
+ends_open = true
+theme_from = "A laukka"
+refine = 30
+rules_override = { density = { weight = 0.0 }, breathing = { weight = 5.0, min_dur = 8, sub_min_dur = 8 }, syncopation = { weight = 3.0, threshold = 0.95 }, delayed_resolution = { weight = 3.0, high_threshold = 0.4 } }
+
+[[section]]
+name = "D laukka kiihtyy"
+chords = "Dm Dm Bb A7 | Dm C Bb A7 | Dm F Gm A7 | Bb A7 Dm Dm"
+key = "D:minor"
+tempo = 138
+bars = 16
+seed = 7
+instrument = "trumpet"
+octave = 0
+style = "western"
+form = "aaba"
+tension = [0.85, 0.85, 0.9, 0.9, 0.85, 0.9, 0.95, 0.95, 0.9, 0.95, 1.0, 1.0, 0.95, 0.9, 0.5, 0.2]
+theme_from = "A laukka"
+refine = 60
+rules_override = { density = { weight = 2.5 }, syncopation = { threshold = 0.6, weight = 2.0 }, max_leap = { soft_max = 12 }, single_climax = { weight = 4.0, min_height = 10 }, mostly_steps = { min_ratio = 0.45 }, surprise = { min_bits = 2.6, max_bits = 4.0 }, breathing = { weight = 1.5, min_dur = 4, sub_min_dur = 2 }, final_note = { weight = 6.0 } }

@@ -263,6 +263,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
     let mut bass = Vec::new();
     let mut layer = Vec::new();
     let mut glock = Vec::new();
+    let mut layer_drums = Vec::new();
     let mut melody_tracks: Vec<Vec<AbsEvent>> = Vec::new();
 
     for (si, sec) in sections.iter().enumerate() {
@@ -464,11 +465,25 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
                             }
                         }
                     };
+                    let gallop = e >= 0.7 && !phrase_end_bar;
                     let mut t = span.start;
                     while t < end {
                         let pos = t % spb;
                         let beat = pos / spbeat;
-                        if beat == 0 {
+                        if gallop {
+                            // Boom-chicka: bass note, then two quick strums
+                            // (8th + 16th + 16th), hoofbeats on woodblocks.
+                            let q = spbeat / 4;
+                            note_pair(&mut chd, CH_CHORDS, root.max(40), gvel + 10, off + t, 2 * q);
+                            strum(&mut chd, t + 2 * q, q, gvel.saturating_sub(6));
+                            strum(&mut chd, t + 3 * q, q, gvel.saturating_sub(12));
+                            note_pair(&mut layer_drums, CH_DRUMS, DRUM_LOW_WOODBLOCK, 78, off + t, 1);
+                            note_pair(&mut layer_drums, CH_DRUMS, DRUM_WOODBLOCK, 60, off + t + 2 * q, 1);
+                            note_pair(&mut layer_drums, CH_DRUMS, DRUM_WOODBLOCK, 66, off + t + 3 * q, 1);
+                            if beat % 2 == 0 {
+                                note_pair(&mut bass, CH_BASS, root, bvel, off + t, spbeat / 2);
+                            }
+                        } else if beat == 0 {
                             note_pair(&mut chd, CH_CHORDS, root.max(40), gvel + 8, off + t, (2 * spbeat).min(end - t));
                             if phrase_end_bar {
                                 strum(&mut chd, t + 1, (span.len).saturating_sub(1), gvel);
@@ -485,8 +500,9 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
                     for p in v.iter().take(3) {
                         note_pair(&mut layer, CH_LAYER, p.saturating_sub(12).max(36), svel, off + span.start, span.len);
                     }
-                    // Contrabass root, very soft, when tense.
-                    if e >= 0.5 {
+                    // Contrabass root, very soft, when tense (held; the
+                    // gallop has its own bass hits).
+                    if e >= 0.5 && !gallop {
                         note_pair(&mut bass, CH_BASS, root, bvel.saturating_sub(20), off + span.start, span.len);
                     }
                     // Glockenspiel: a single high root at phrase ends.
@@ -822,6 +838,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
     }
     if sections.iter().any(|s| s.style == Style::Western) {
         smf.tracks.push(to_track(glock));
+        smf.tracks.push(to_track(layer_drums));
     }
 
     if let Some(parent) = path.parent() {
