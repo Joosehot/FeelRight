@@ -162,6 +162,11 @@ pub fn plan(text: &str) -> Plan {
         energy = energy.max(0.6);
         notes.push("mood: comic".into());
     }
+    if has(&t, &["urut", "urku", "organ", "toccata"]) {
+        style = "organ".into();
+        instruments = vec!["organ".into(), "organ".into(), "organ".into()];
+        notes.push("style: organ".into());
+    }
     if has(&t, &["western", "lännen", "preeria", "aavikko", "desert", "cowboy", "spaghetti"]) {
         style = "western".into();
         instruments = vec!["harmonica".into(), "steel_guitar".into(), "strings".into()];

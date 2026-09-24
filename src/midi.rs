@@ -235,6 +235,7 @@ const GM_ACCORDION: u8 = 21;
 const GM_NYLON_GUITAR: u8 = 24;
 const GM_BANDONEON: u8 = 23;
 const GM_STEEL_GUITAR: u8 = 25;
+const GM_CHURCH_ORGAN: u8 = 19;
 const GM_GLOCKENSPIEL: u8 = 9;
 const CH_GLOCK: u8 = 12;
 const GM_TUBA: u8 = 58;
@@ -330,6 +331,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
             Style::Baroque => (GM_NYLON_GUITAR, GM_NYLON_GUITAR, 0),
             Style::Tango => (GM_BANDONEON, GM_CONTRABASS, GM_STRINGS),
             Style::Western => (GM_STEEL_GUITAR, GM_CONTRABASS, GM_STRINGS),
+            Style::Organ => (GM_CHURCH_ORGAN, GM_CHURCH_ORGAN, GM_CHURCH_ORGAN),
             _ => (0, 0, 0),
         };
         let (chord_prog, bass_prog) = match sec.acc_program {
@@ -446,6 +448,68 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
                             t += spbeat;
                         }
                     }
+                }
+                Style::Organ => {
+                    // Left hand (manual II): voice-led chord in the small
+                    // octave, held; re-struck on beat 3 from tension 0.5,
+                    // on every beat from 0.75, and as repeated 8ths at 0.9+
+                    // (toccata). A second inner voice doubles the 3rd an
+                    // octave up when tense.
+                    let v = voice_lead(span, prev_voicing.as_deref(), 48, 60);
+                    let spbeat = sec.meter.steps_per_beat();
+                    let end = span.start + span.len;
+                    let vel = (50.0 + 40.0 * e).round().min(115.0) as u8;
+                    let restrike = if phrase_end_bar { 0 } else if e >= 0.9 { spbeat / 2 } else if e >= 0.75 { spbeat } else if e >= 0.5 { 2 * spbeat } else { 0 };
+                    if restrike == 0 {
+                        for p in &v {
+                            note_pair(&mut chd, CH_CHORDS, *p, vel, off + span.start, span.len);
+                        }
+                    } else {
+                        let mut t = span.start;
+                        while t < end {
+                            let len = restrike.min(end - t);
+                            let acc = if t % spb == 0 { 6 } else { 0 };
+                            for p in &v {
+                                note_pair(&mut chd, CH_CHORDS, *p, vel + acc, off + t, len.saturating_sub(1).max(1));
+                            }
+                            t += restrike;
+                        }
+                    }
+                    if e >= 0.6 && v.len() > 1 {
+                        note_pair(&mut layer, CH_LAYER, v[1] + 12, vel.saturating_sub(16), off + span.start, span.len);
+                    }
+                    // Pedal: root in the great octave; fifth on beat 3
+                    // from tension 0.4; walk to the next root at phrase ends.
+                    let pedal = root.saturating_sub(12).max(24);
+                    let next = chords_after(sec.chords, span).map(|c| (36 + c.root.0).saturating_sub(12).max(24));
+                    if phrase_end_bar {
+                        let target = next.unwrap_or(pedal);
+                        let mut t = span.start;
+                        let mut p = pedal as i32;
+                        let steps = ((end - span.start) / spbeat).max(1) as i32;
+                        let dir = (target as i32 - pedal as i32).signum();
+                        let step = if dir == 0 { 0 } else { ((target as i32 - pedal as i32).abs() / steps).max(1) * dir };
+                        while t < end {
+                            let len = spbeat.min(end - t);
+                            let pitch = if t + spbeat >= end { target as i32 } else { p };
+                            note_pair(&mut bass, CH_BASS, pitch.clamp(24, 55) as u8, bvel, off + t, len);
+                            p += step;
+                            t += spbeat;
+                        }
+                    } else if e >= 0.4 {
+                        let mut t = span.start;
+                        let mut i = 0;
+                        while t < end {
+                            let len = (2 * spbeat).min(end - t);
+                            let p = if i % 2 == 0 { pedal } else { pedal + 7 };
+                            note_pair(&mut bass, CH_BASS, p, bvel, off + t, len);
+                            t += len;
+                            i += 1;
+                        }
+                    } else {
+                        note_pair(&mut bass, CH_BASS, pedal, bvel, off + span.start, span.len);
+                    }
+                    prev_voicing = Some(v);
                 }
                 Style::Western => {
                     // Guitar: bass note on 1 (held), soft strum on 3; when
@@ -833,7 +897,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
     }
     smf.tracks.push(to_track(chd));
     smf.tracks.push(to_track(bass));
-    if sections.iter().any(|s| matches!(s.style, Style::Orchestral | Style::Brass | Style::Concerto | Style::Waltz | Style::Rapids | Style::Jazz | Style::Circus | Style::Tango | Style::Western)) {
+    if sections.iter().any(|s| matches!(s.style, Style::Orchestral | Style::Brass | Style::Concerto | Style::Waltz | Style::Rapids | Style::Jazz | Style::Circus | Style::Tango | Style::Western | Style::Organ)) {
         smf.tracks.push(to_track(layer));
     }
     if sections.iter().any(|s| s.style == Style::Western) {

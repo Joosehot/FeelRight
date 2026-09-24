@@ -50,6 +50,10 @@ pub enum Style {
     /// strings held underneath, a glockenspiel touch at phrase ends.
     /// Sparse; the tension adds an off-beat strum, never a full pulse.
     Western,
+    /// Organ: right hand melody, left hand voice-led chords held and
+    /// re-struck as the tension rises, pedal on the root with the fifth
+    /// on the weak strong beat and a walk to the next root at phrase ends.
+    Organ,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
