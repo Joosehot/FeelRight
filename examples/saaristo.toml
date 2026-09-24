@@ -1,0 +1,73 @@
+# Nordic archipelago ballad in the spirit of Finnish sea-and-island film
+# themes. A minor verse over held strings, a chorus that opens into the
+# relative major with a wide singing arch, a stormier second verse with
+# brass under the voice, and the chorus once more with the whole
+# orchestra, dying away on the sea.
+
+name = "Saaristolaulu"
+
+[[section]]
+name = "A säkeistö"
+chords = "Dm Bb Gm A7 | Dm Bb C A7 | Dm F Gm Dm | Bb Gm A7 A7"
+key = "D:minor"
+tempo = 76
+bars = 16
+seed = 8
+instrument = "voice"
+octave = 0
+style = "orchestral"
+form = "period"
+tension = [0.2, 0.25, 0.3, 0.35, 0.3, 0.35, 0.45, 0.4, 0.35, 0.4, 0.5, 0.6, 0.5, 0.45, 0.5, 0.6]
+ends_open = true
+refine = 60
+rules_override = { mostly_steps = { min_ratio = 0.55 }, breathing = { weight = 4.0 }, nct_types = { appoggiatura = 0.8, suspension = 0.9 } }
+
+[[section]]
+name = "B kertosäe"
+chords = "F C Dm Bb | F C Bb C | Dm Bb F C | Gm Bb A7 A7"
+key = "F:major"
+tempo = 80
+bars = 16
+seed = 3
+instrument = "strings"
+octave = 1
+style = "orchestral"
+form = "sentence"
+tension = [0.45, 0.5, 0.55, 0.6, 0.55, 0.6, 0.7, 0.7, 0.6, 0.65, 0.85, 0.95, 0.8, 0.65, 0.6, 0.7]
+ends_open = true
+theme_from = "A säkeistö"
+refine = 60
+rules_override = { max_leap = { soft_max = 12 }, single_climax = { weight = 4.0, min_height = 12 }, range = { soft_max = 19 }, mostly_steps = { min_ratio = 0.45 }, nct_types = { appoggiatura = 0.8, suspension = 0.9 } }
+
+[[section]]
+name = "C myrskysäkeistö"
+chords = "Dm Bb Gm A7 | Dm Bb C A7 | Dm F Gm Dm | Bb Gm A7 A7"
+key = "D:minor"
+tempo = 88
+bars = 16
+seed = 8
+instrument = "voice"
+octave = 0
+style = "concerto"
+form = "period"
+tension = [0.5, 0.55, 0.6, 0.65, 0.6, 0.65, 0.75, 0.75, 0.65, 0.7, 0.85, 0.95, 0.85, 0.75, 0.75, 0.85]
+ends_open = true
+theme_from = "A säkeistö"
+refine = 60
+rules_override = { mostly_steps = { min_ratio = 0.5 }, density = { weight = 3.0 }, nct_types = { appoggiatura = 0.8, suspension = 0.9 }, syncopation = { threshold = 0.5 } }
+
+[[section]]
+name = "D kertosäe tutti"
+chords = "F C Dm Bb | F C Bb C | Dm Bb F C | Bb C F F"
+key = "F:major"
+tempo = 78
+bars = 16
+seed = 3
+instrument = "strings"
+octave = 1
+style = "concerto"
+form = "sentence"
+tension = [0.7, 0.75, 0.8, 0.85, 0.8, 0.85, 0.9, 0.9, 0.8, 0.85, 1.0, 1.0, 0.85, 0.6, 0.35, 0.1]
+theme_from = "B kertosäe"
+refine = 60
+rules_override = { max_leap = { soft_max = 12 }, single_climax = { weight = 4.0, min_height = 12 }, range = { soft_max = 19 }, mostly_steps = { min_ratio = 0.45 }, final_note = { weight = 6.0 } }
