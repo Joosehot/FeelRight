@@ -234,6 +234,9 @@ const DRUM_LOW_WOODBLOCK: u8 = 77;
 const GM_ACCORDION: u8 = 21;
 const GM_NYLON_GUITAR: u8 = 24;
 const GM_BANDONEON: u8 = 23;
+const GM_STEEL_GUITAR: u8 = 25;
+const GM_GLOCKENSPIEL: u8 = 9;
+const CH_GLOCK: u8 = 12;
 const GM_TUBA: u8 = 58;
 const GM_TIMPANI: u8 = 47;
 
@@ -259,6 +262,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
     let mut chd = Vec::new();
     let mut bass = Vec::new();
     let mut layer = Vec::new();
+    let mut glock = Vec::new();
     let mut melody_tracks: Vec<Vec<AbsEvent>> = Vec::new();
 
     for (si, sec) in sections.iter().enumerate() {
@@ -324,6 +328,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
             Style::Circus => (GM_ACCORDION, GM_TUBA, 0),
             Style::Baroque => (GM_NYLON_GUITAR, GM_NYLON_GUITAR, 0),
             Style::Tango => (GM_BANDONEON, GM_CONTRABASS, GM_STRINGS),
+            Style::Western => (GM_STEEL_GUITAR, GM_CONTRABASS, GM_STRINGS),
             _ => (0, 0, 0),
         };
         let (chord_prog, bass_prog) = match sec.acc_program {
@@ -333,6 +338,7 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
         program_change(&mut chd, tick0, CH_CHORDS, chord_prog);
         program_change(&mut bass, tick0, CH_BASS, bass_prog);
         program_change(&mut layer, tick0, CH_LAYER, layer_prog);
+        program_change(&mut glock, tick0, CH_GLOCK, GM_GLOCKENSPIEL);
         let mut prev_voicing: Option<Vec<u8>> = None;
         for span in sec.chords {
             let e = sec.energy.get((span.start / spb) as usize).copied().unwrap_or(0.5);
@@ -439,6 +445,55 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
                             t += spbeat;
                         }
                     }
+                }
+                Style::Western => {
+                    // Guitar: bass note on 1 (held), soft strum on 3; when
+                    // tense, an extra strum on the "and" of 4. Low strings
+                    // hold the chord in the small octave, quietly. At phrase
+                    // ends the guitar lets the chord ring and a glockenspiel
+                    // touches the root two octaves up.
+                    let v = voice_lead(span, prev_voicing.as_deref(), 50, 62);
+                    let spbeat = sec.meter.steps_per_beat();
+                    let end = span.start + span.len;
+                    let gvel = (40.0 + 30.0 * e).round() as u8;
+                    let strum = |chd: &mut Vec<AbsEvent>, at: u32, len: u32, vel: u8| {
+                        for (k, p) in v.iter().enumerate() {
+                            let d = k as u32; // rolled strum, one step apart
+                            if at + d < end {
+                                note_pair(chd, CH_CHORDS, *p, vel, off + at + d, len.saturating_sub(d).max(1));
+                            }
+                        }
+                    };
+                    let mut t = span.start;
+                    while t < end {
+                        let pos = t % spb;
+                        let beat = pos / spbeat;
+                        if beat == 0 {
+                            note_pair(&mut chd, CH_CHORDS, root.max(40), gvel + 8, off + t, (2 * spbeat).min(end - t));
+                            if phrase_end_bar {
+                                strum(&mut chd, t + 1, (span.len).saturating_sub(1), gvel);
+                            }
+                        } else if beat == 2 && !phrase_end_bar {
+                            strum(&mut chd, t, spbeat + spbeat / 2, gvel);
+                        } else if beat == 3 && e >= 0.55 && !phrase_end_bar {
+                            strum(&mut chd, t + spbeat / 2, spbeat / 2, gvel.saturating_sub(10));
+                        }
+                        t += spbeat;
+                    }
+                    // Low strings, quiet, always present.
+                    let svel = (24.0 + 36.0 * e).round() as u8;
+                    for p in v.iter().take(3) {
+                        note_pair(&mut layer, CH_LAYER, p.saturating_sub(12).max(36), svel, off + span.start, span.len);
+                    }
+                    // Contrabass root, very soft, when tense.
+                    if e >= 0.5 {
+                        note_pair(&mut bass, CH_BASS, root, bvel.saturating_sub(20), off + span.start, span.len);
+                    }
+                    // Glockenspiel: a single high root at phrase ends.
+                    if phrase_end_bar && span.start % spb == 0 {
+                        note_pair(&mut glock, CH_GLOCK, root + 36, (50.0 + 30.0 * e).round() as u8, off + span.start, spb);
+                    }
+                    prev_voicing = Some(v);
                 }
                 Style::Tango => {
                     // Three figures, chosen by bar and tension so no two
@@ -762,8 +817,11 @@ pub fn write_suite(path: &Path, sections: &[Section]) -> Result<()> {
     }
     smf.tracks.push(to_track(chd));
     smf.tracks.push(to_track(bass));
-    if sections.iter().any(|s| matches!(s.style, Style::Orchestral | Style::Brass | Style::Concerto | Style::Waltz | Style::Rapids | Style::Jazz | Style::Circus | Style::Tango)) {
+    if sections.iter().any(|s| matches!(s.style, Style::Orchestral | Style::Brass | Style::Concerto | Style::Waltz | Style::Rapids | Style::Jazz | Style::Circus | Style::Tango | Style::Western)) {
         smf.tracks.push(to_track(layer));
+    }
+    if sections.iter().any(|s| s.style == Style::Western) {
+        smf.tracks.push(to_track(glock));
     }
 
     if let Some(parent) = path.parent() {

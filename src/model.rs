@@ -46,6 +46,10 @@ pub enum Style {
     /// Tango: habanera, marcato and 3-3-2 figures alternating in the
     /// bandoneon, staccato bass with chromatic walk-downs at phrase ends.
     Tango,
+    /// Western: steel guitar bass note on 1 and a soft strum on 3, low
+    /// strings held underneath, a glockenspiel touch at phrase ends.
+    /// Sparse; the tension adds an off-beat strum, never a full pulse.
+    Western,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

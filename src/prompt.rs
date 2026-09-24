@@ -162,6 +162,14 @@ pub fn plan(text: &str) -> Plan {
         energy = energy.max(0.6);
         notes.push("mood: comic".into());
     }
+    if has(&t, &["western", "lännen", "preeria", "aavikko", "desert", "cowboy", "spaghetti"]) {
+        style = "western".into();
+        instruments = vec!["harmonica".into(), "steel_guitar".into(), "strings".into()];
+        mode = Mode::Minor;
+        tempo = 78;
+        energy = energy.min(0.5);
+        notes.push("style: western".into());
+    }
     if has(&t, &["tango", "habanera", "milonga"]) {
         style = "tango".into();
         instruments = vec!["bandoneon".into(), "violin".into(), "bandoneon".into()];
