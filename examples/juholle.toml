@@ -1,0 +1,92 @@
+# "Juholle" — a small oratorio in Bach's manner, in the shape of a
+# Christmas-Oratorio cantata: an opening chorus in D major with trumpets
+# and timpani, a secco recitative over held continuo, an aria for oboe
+# over baroque figuration, a four-square chorale for choir and organ,
+# and the opening chorus returning to close. One theme runs through it.
+
+name = "Juholle"
+
+[[section]]
+name = "1 Kuoro"
+chords = "D A Bm G | D A G A | Bm F#m G D | G D A D"
+key = "D:major"
+meter = "3/4"
+tempo = 104
+bars = 16
+seed = 5
+instrument = "trumpet"
+octave = 0
+style = "brass"
+form = "period"
+tension = [0.6, 0.65, 0.7, 0.75, 0.7, 0.75, 0.85, 0.8, 0.7, 0.75, 0.9, 1.0, 0.85, 0.75, 0.7, 0.75]
+ends_open = true
+refine = 60
+rules_override = { sequence = { weight = 3.0 }, syncopation = { weight = 3.0, threshold = 0.95 }, mostly_steps = { min_ratio = 0.55, max_ratio = 0.85 }, single_climax = { weight = 4.0, min_height = 10 }, surprise = { min_bits = 2.0, max_bits = 3.4 } }
+
+[[section]]
+name = "2 Resitatiivi"
+chords = "Bm Em F#7 Bm | G A7 D A7"
+key = "B:minor"
+tempo = 60
+bars = 8
+seed = 3
+instrument = "voice"
+octave = 0
+style = "organ"
+form = "period"
+tension = [0.3, 0.35, 0.45, 0.4, 0.35, 0.45, 0.4, 0.5]
+ends_open = true
+refine = 40
+rules_override = { density = { weight = 0.0 }, rhythmic_variety = { weight = 0.0 }, mostly_steps = { min_ratio = 0.6 }, monotone = { max_repeats = 6 }, breathing = { weight = 4.0 }, syncopation = { weight = 3.0, threshold = 0.95 } }
+
+[[section]]
+name = "3 Aaria"
+chords = "G D Em C | G D C D | Em Bm C G | Am D7 G D7"
+key = "G:major"
+tempo = 72
+bars = 16
+seed = 9
+instrument = "oboe"
+octave = 0
+style = "baroque"
+form = "period"
+tension = [0.3, 0.35, 0.4, 0.45, 0.4, 0.45, 0.55, 0.5, 0.45, 0.5, 0.65, 0.75, 0.6, 0.5, 0.5, 0.6]
+ends_open = true
+bridge = 1
+theme_from = "1 Kuoro"
+refine = 60
+rules_override = { sequence = { weight = 3.0 }, nct_types = { appoggiatura = 0.8, suspension = 0.9 }, syncopation = { weight = 3.0, threshold = 0.95 }, mostly_steps = { min_ratio = 0.6, max_ratio = 0.85 }, surprise = { min_bits = 2.0, max_bits = 3.2 } }
+
+[[section]]
+name = "4 Koraali"
+chords = "D A Bm F#m | G D Em A | Bm F#m G D | G A D D"
+key = "D:major"
+tempo = 60
+bars = 16
+seed = 14
+instrument = "choir"
+octave = -1
+style = "organ"
+form = "period"
+tension = [0.35, 0.4, 0.45, 0.4, 0.4, 0.45, 0.55, 0.45, 0.45, 0.5, 0.6, 0.65, 0.55, 0.5, 0.45, 0.4]
+ends_open = true
+theme_from = "1 Kuoro"
+refine = 60
+rules_override = { rhythmic_variety = { weight = 0.0 }, density = { weight = 0.0 }, syncopation = { weight = 4.0, threshold = 0.99 }, mostly_steps = { min_ratio = 0.7, max_ratio = 0.95 }, breathing = { weight = 4.0, min_dur = 8, sub_min_dur = 8 }, chord_tones_on_strong_beats = { weight = 5.0, breakable = false }, surprise = { min_bits = 1.6, max_bits = 2.8 }, max_leap = { soft_max = 7 }, long_notes_on_strong_beats = { weight = 3.0 } }
+
+[[section]]
+name = "5 Loppukuoro"
+chords = "D A Bm G | D A G A | Bm F#m G D | G A D D"
+key = "D:major"
+meter = "3/4"
+tempo = 108
+bars = 16
+seed = 5
+instrument = "trumpet"
+octave = 0
+style = "brass"
+form = "period"
+tension = [0.7, 0.75, 0.8, 0.85, 0.8, 0.85, 0.9, 0.9, 0.8, 0.85, 1.0, 1.0, 0.9, 0.7, 0.4, 0.1]
+theme_from = "1 Kuoro"
+refine = 60
+rules_override = { sequence = { weight = 3.0 }, syncopation = { weight = 3.0, threshold = 0.95 }, mostly_steps = { min_ratio = 0.55, max_ratio = 0.85 }, single_climax = { weight = 4.0, min_height = 10 }, surprise = { min_bits = 2.0, max_bits = 3.4 }, final_note = { weight = 6.0 } }
