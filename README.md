@@ -142,3 +142,9 @@ subprocess.run(["melody", "suite", "--file", "piece.toml", "--out", "piece.mid",
 - `src/midi.rs` — MIDI writer
 - `rules.toml` — all weights and parameters
 - `examples/out/` — generated examples with their explanations
+
+## License
+
+PolyForm Noncommercial 1.0.0, see [LICENSE](LICENSE). Free for personal, hobby, research, educational and other noncommercial use; commercial use needs a separate licence from the author.
+
+Copyright (c) 2026 Joose Hotari.
